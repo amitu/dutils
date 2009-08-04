@@ -5,7 +5,7 @@ from django.core.mail import send_mail, mail_admins
 import dutils.utils
 # }}}
 
-# Worker#{{{
+# Worker # {{{
 class Worker(threading.Thread):
     def __init__(self, queue, shutdown):
         super(Worker, self).__init__()
@@ -32,10 +32,10 @@ class Worker(threading.Thread):
             else:
                 self.queue.task_done()
             print self.queue.qsize()
-#}}}
+# }}}
 
-# tasks#{{{
-# EmailTask#{{{
+# tasks # {{{
+# EmailTask # {{{
 class EmailTask: 
     def __init__(self, *args, **kw):
         self.args = args
@@ -43,22 +43,22 @@ class EmailTask:
     def process(self):
         from dutils import utils
         utils._send_html_mail(*self.args, **self.kw)
-#}}}
-#}}}
+# }}}
+# }}}
 
-# Messenger#{{{
+# Messenger # {{{
 class Messenger:
-    # __init__#{{{
+    # __init__ # {{{
     def __init__(self):
         self.queue = Queue.Queue(0) # infinite size queue
         self.shutdown = threading.Event()
         self.worker = Worker(self.queue, self.shutdown)
-    #}}}
-    # send_html_mail#{{{
+    # }}}
+    # send_html_mail # {{{
     def send_html_mail(self, *args, **kw):
         print "send_html_mail called"
         self.queue.put(EmailTask(*args, **kw))
-    #}}}
+    # }}}
     def join(self):
         print "Messenger.join: Cleaning up Messenger"
         self.queue.join()
@@ -66,7 +66,7 @@ class Messenger:
         self.shutdown.set()
         self.worker.join()
         print "Messenger.join: worker done"
-#}}}
+# }}}
 
 messenger = Messenger()
 
