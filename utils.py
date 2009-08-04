@@ -7,7 +7,7 @@ from django.utils.encoding import smart_str, smart_unicode
 from django.http import HttpResponseServerError, HttpResponseRedirect
 
 import time, random, re, os, md5, sys
-import urllib2, urllib
+import urllib2, urllib, threading
 from PIL import Image
 
 import logging
@@ -16,6 +16,17 @@ try:
     import solr
 except ImportError: 
     print "solr lib required for some functions"
+# }}} 
+
+# threaded_task # {{{ 
+def threaded_task(func):
+    def decorated(*args, **kwargs):
+        thread = threading.Thread(target=func, args=args, kwargs=kwargs)
+        thread.start()
+        return thread
+    decorated.__doc__ = func.__doc__
+    decorated.__name__ = func.__name__
+    return decorated
 # }}} 
 
 # logging # {{{
@@ -365,9 +376,9 @@ charset='utf-8'
 
 email.Charset.add_charset(charset, email.Charset.SHORTEST, None, None)
 
-send_html_mail = messenger.send_html_mail
-
-def _send_html_mail(
+# send_html_mail = messenger.send_html_mail
+@threaded_task
+def send_html_mail(
     subject, sender="support@fwd2tweet.com", recip="", context=None, 
     html_template="", text_template="", sender_name="",
     html_content="", text_content="", recip_list=None, sender_formatted=""
@@ -508,3 +519,4 @@ def fb_get_uid(request):
     return request.COOKIES[settings.FB_API_KEY + '_user']
 # }}}
 # }}} 
+
