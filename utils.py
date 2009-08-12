@@ -6,7 +6,8 @@ from django.core.files.base import ContentFile
 from django.utils.encoding import smart_str, smart_unicode
 from django.http import HttpResponseServerError, HttpResponseRedirect
 
-import time, random, re, os, md5, sys
+import time, random, re, os, sys
+from hashlib import md5
 import urllib2, urllib, threading
 from PIL import Image
 
@@ -90,7 +91,7 @@ def uuid( *args ):
     # if we can't get a network address, just imagine one
     a = random.random()*100000000000000000L
   data = str(t)+' '+str(r)+' '+str(a)+' '+str(args)
-  data = md5.new(data).hexdigest()
+  data = md5(data).hexdigest()
   return data
 # }}}  
 
@@ -490,7 +491,7 @@ def fb_get_signature(values_dict, is_cookie_check=False):
         )
     signature_string = signature_string + settings.FB_API_SECRET
 
-    return md5.new(signature_string).hexdigest()
+    return md5(signature_string).hexdigest()
 # }}} 
 
 # fb_get_user_info # {{{
