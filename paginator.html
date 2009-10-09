@@ -1,0 +1,16 @@
+<br /><center>
+<span class="lbottom">
+{% if has_previous %}<a href="{{ path }}page={{ previous }}"><< Previous </a>{% else %}<span>Previous </span>{% endif %}
+{% if show_first %}<a href="{{ path }}page=1">First </a>{% endif %}
+{% for page_no in page_numbers %}
+    {% ifnotequal page_no page %}
+        <a href="{{ path }}page={{ page_no }}">{{ page_no }} </a>
+    {% else %}
+    {{ page_no }} 
+    {% endifnotequal %}
+{% endfor %}
+{% if show_last %}<a href="{{ path }}page={{ pages }}">Last </a>{% endif %}
+{% if has_next %}<a href="{{ path }}page={{ next }}">Next >></a>{% else %}<span>Next </span>{% endif %}
+</span>
+<br /></center>
+<!-- <br><center>({{ hits }} SMS{{ hits|pluralize:",es" }})</center> -->
