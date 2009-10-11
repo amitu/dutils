@@ -5,6 +5,7 @@ from django import forms
 from django.core.files.base import ContentFile
 from django.utils.encoding import smart_str, smart_unicode
 from django.http import HttpResponseServerError, HttpResponseRedirect
+from django.http import HttpResponse
 
 import time, random, re, os, sys
 from hashlib import md5
@@ -521,3 +522,11 @@ def fb_get_uid(request):
 # }}}
 # }}} 
 
+# JSONResponse # {{{
+class JSONResponse(HttpResponse):
+    def __init__(self, data):
+        HttpResponse.__init__(
+            self, content=simplejson.dumps(data),
+            #mimetype="text/html",
+        ) 
+# }}}
