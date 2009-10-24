@@ -530,3 +530,24 @@ class JSONResponse(HttpResponse):
             #mimetype="text/html",
         ) 
 # }}}
+
+# batch_gen # {{{
+def batch_gen1(seq, batch_size):
+    """ 
+    to be used when length of seq is known.
+    makes one slice call per batch, in case of django db api this is faster
+    """
+
+    for i in range(0, len(seq), batch_size):
+        yield seq[i:i+batch_size]
+
+def batch_gen2(seq, batch_size):
+    """ to be used when length is not known """
+    it = iter(seq)
+    while True:
+        values = ()
+        for n in xrange(batch_size):
+            values += (it.next(),)
+    yield values
+# }}}
+
