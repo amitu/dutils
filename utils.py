@@ -7,7 +7,7 @@ from django.utils.encoding import smart_str, smart_unicode
 from django.http import HttpResponseServerError, HttpResponseRedirect
 from django.http import HttpResponse
 
-import time, random, re, os, sys
+import time, random, re, os, sys, traceback
 from hashlib import md5
 import urllib2, urllib, threading
 from PIL import Image
