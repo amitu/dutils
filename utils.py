@@ -63,10 +63,7 @@ class SimpleExceptionHandler:
     def process_exception(self, request, exception):
         import sys, traceback
         (exc_type, exc_info, tb) = sys.exc_info()
-        if hasattr(exc_type, "__name__"):
-            response = "%s\n" % exc_type.__name__
-        else:
-            response = "%s\n" % exc_type
+        response = "%s\n" % getattr(exc_type, "__name__", exc_type)
         response += "%s\n\n" % exc_info
         response += "TRACEBACK:\n"    
         for tb in traceback.format_tb(tb):
@@ -260,7 +257,7 @@ def formatExceptionInfo(level = 6):
     error_type, error_value, trbk = sys.exc_info()
     tb_list = traceback.format_tb(trbk, level)   
     s = "Error: %s \nDescription: %s \nTraceback:" % (
-        error_type.__name__, error_value
+        getattr(error_type, "__name__", error_type), error_value
     )
     for i in tb_list:
         s += "\n" + i
