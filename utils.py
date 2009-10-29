@@ -741,13 +741,13 @@ def copy_file_to_s3(p, key, bucket):
     import boto
     from boto.s3.key import Key
     final_url = "http://%s/%s" % (bucket, key)
-    conn = boto.connect_s3(
-        settings.S3_ACCESS_KEY, settings.S3_SECRET_KEY
-    )
-    bucket = conn.create_bucket(bucket)
 
     s3_operation_lock.acquire()
     try:
+        conn = boto.connect_s3(
+            settings.S3_ACCESS_KEY, settings.S3_SECRET_KEY
+        )
+        bucket = conn.create_bucket(bucket)
         k = Key(bucket)
         k.key = key 
         k.set_contents_from_string(get_content_from_path(p))
