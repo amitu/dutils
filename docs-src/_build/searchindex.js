@@ -1,0 +1,1 @@
+Search.setIndex({desctypes:{},terms:{index:0,search:0,set:0,welcom:0,project:0,document:0,modul:0,work:0,indic:0,django:0,util:0,dutil:0,thi:0,tabl:0,section:0,page:0,content:0,tool:0,help:0},titles:["Welcome to dutils&#8217;s documentation!"],modules:{},descrefs:{},filenames:["index"]})
