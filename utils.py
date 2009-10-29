@@ -710,6 +710,10 @@ class LazyEncoder(simplejson.JSONEncoder):
 def ajax_form_handler(
     request, form_cls, require_login=True, allow_get=settings.DEBUG
 ):
+    """
+    Some ajax heavy apps require a lot of views that are merely a wrapper
+    around the form. This generic view can be used for them.
+    """
     if callable(require_login): require_login = require_login()
     if require_login and not request.user.is_authenticated(): 
         raise Http404("login required")
