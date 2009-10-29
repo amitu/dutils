@@ -271,6 +271,7 @@ def formatExceptionInfo(level = 6):
 
 # S3 Photo Storeage # {{{
 def delete_jpg(key):
+    import boto
     if settings.USE_S3_BACKEND:
         conn = boto.connect_s3(
             settings.S3_ACCESS_KEY, settings.S3_SECRET_KEY
@@ -285,6 +286,8 @@ def delete_jpg(key):
     else: pass # we dont care about local storage cleanup. Lazy me.
 
 def update_gif(key, data):
+    import boto
+    from boto.s3.key import Key
     salt = random.randint(0, 1000)
     full_key = "%s/%s.gif" % (key, salt)
     if settings.USE_S3_BACKEND:
@@ -312,6 +315,8 @@ def update_gif(key, data):
         return "/static/%s" % full_key
 
 def update_jpg(key, img, delete_key=None, format="jpeg"):
+    import boto
+    from boto.s3.key import Key
     s = cStringIO.StringIO()
     img.convert("RGB").save(s, format=format)
     s.seek(0)
@@ -732,11 +737,14 @@ def ajax_form_handler(
 
 # copy_file_to_s3 # {{{ 
 def copy_file_to_s3(p, key, bucket):
+    import boto
+    from boto.s3.key import Key
     final_url = "http://%s/%s" % (bucket, key)
     conn = boto.connect_s3(
         settings.S3_ACCESS_KEY, settings.S3_SECRET_KEY
     )
     bucket = conn.create_bucket(bucket)
+
     k = Key(bucket)
     k.key = key 
     k.set_contents_from_string(get_content_from_path(p))
