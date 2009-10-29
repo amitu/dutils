@@ -732,6 +732,7 @@ def ajax_form_handler(
 
 # copy_file_to_s3 # {{{ 
 def copy_file_to_s3(p, key, bucket):
+    final_url = "http://%s/%s" % (bucket, key)
     conn = boto.connect_s3(
         settings.S3_ACCESS_KEY, settings.S3_SECRET_KEY
     )
@@ -740,4 +741,5 @@ def copy_file_to_s3(p, key, bucket):
     k.key = key 
     k.set_contents_from_string(get_content_from_path(p))
     k.set_acl("public-read")
+    return final_url
 # }}} 
