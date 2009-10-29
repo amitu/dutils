@@ -736,6 +736,7 @@ def ajax_form_handler(
 # }}}
 
 # copy_file_to_s3 # {{{ 
+s3_operation_lock = threading.Condition(threading.Lock())
 def copy_file_to_s3(p, key, bucket):
     import boto
     from boto.s3.key import Key
@@ -745,9 +746,14 @@ def copy_file_to_s3(p, key, bucket):
     )
     bucket = conn.create_bucket(bucket)
 
-    k = Key(bucket)
-    k.key = key 
-    k.set_contents_from_string(get_content_from_path(p))
-    k.set_acl("public-read")
+    s3_operation_lock.acquire()
+    try:
+        k = Key(bucket)
+        k.key = key 
+        k.set_contents_from_string(get_content_from_path(p))
+        k.set_acl("public-read")
+    finally:
+        s3_operation_lock.release()
+
     return final_url
 # }}} 
