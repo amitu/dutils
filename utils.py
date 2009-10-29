@@ -273,7 +273,7 @@ def formatExceptionInfo(level = 6):
 def delete_jpg(key):
     if settings.USE_S3_BACKEND:
         conn = boto.connect_s3(
-            settings.S3_ACCOUNT, settings.S3_KEY
+            settings.S3_ACCESS_KEY, settings.S3_SECRET_KEY
         )
         bucket_1 = conn.create_bucket(settings.S3_BUCKET_1)
         bucket_2 = conn.create_bucket(settings.S3_BUCKET_2)
@@ -289,7 +289,7 @@ def update_gif(key, data):
     full_key = "%s/%s.gif" % (key, salt)
     if settings.USE_S3_BACKEND:
         conn = boto.connect_s3(
-            settings.S3_ACCOUNT, settings.S3_KEY
+            settings.S3_ACCESS_KEY, settings.S3_SECRET_KEY
         )
         bucket_1 = conn.create_bucket(settings.S3_BUCKET_1)
         bucket_2 = conn.create_bucket(settings.S3_BUCKET_2)
@@ -320,7 +320,7 @@ def update_jpg(key, img, delete_key=None, format="jpeg"):
 
     if getattr(settings, "USE_S3_BACKEND", False):
         conn = boto.connect_s3(
-            settings.S3_ACCOUNT, settings.S3_KEY
+            settings.S3_ACCESS_KEY, settings.S3_SECRET_KEY
         )
         bucket_1 = conn.create_bucket(settings.S3_BUCKET_1)
         bucket_2 = conn.create_bucket(settings.S3_BUCKET_2)
@@ -729,3 +729,15 @@ def ajax_form_handler(
         return JSONResponse({ 'success': True, 'response': form.save() })
     return JSONResponse({ 'success': False, 'errors': form.errors })
 # }}}
+
+# copy_file_to_s3 # {{{ 
+def copy_file_to_s3(p, key, bucket):
+    conn = boto.connect_s3(
+        settings.S3_ACCESS_KEY, settings.S3_SECRET_KEY
+    )
+    bucket = conn.create_bucket(bucket)
+    k = Key(bucket)
+    k.key = key 
+    k.set_contents_from_string(get_content_from_path(p))
+    k.set_acl("public-read")
+# }}} 
