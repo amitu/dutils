@@ -45,3 +45,23 @@ def batch(value, arg):
     return list(batch_gen1(value, int(arg)))
 # }}}
 
+# month_number_to_name
+@register.filter
+def month_number_to_name(value, arg="1"):
+    return {
+        "1": {
+            "01": "Jan",
+            "02": "Feb",
+            "03": "Mar",
+            "04": "Apr",
+            "05": "May",
+            "06": "June",
+            "07": "July",
+            "08": "Aug",
+            "09": "Sept",
+            "10": "Oct",
+            "11": "Nov",
+            "12": "Dec",
+        }
+    }[arg][value]
+# }}} 
