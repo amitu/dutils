@@ -6,6 +6,8 @@ from django.core.files.base import ContentFile
 from django.utils.encoding import smart_str, smart_unicode
 from django.http import HttpResponseServerError, HttpResponseRedirect
 from django.http import HttpResponse
+from django.core.cache import cache
+from django.core.urlresolvers import get_mod_func
 
 import time, random, re, os, sys, traceback
 from hashlib import md5
@@ -32,7 +34,7 @@ def threaded_task(func):
 # }}} 
 
 # logging # {{{
-def create_logger(name=None):
+def create_logger(name=None, level=logging.DEBUG):
     if name is None:
         name = settings.APP_DIR.namebase
     logger = logging.getLogger(name)
@@ -42,7 +44,7 @@ def create_logger(name=None):
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     hdlr.setFormatter(formatter)
     logger.addHandler(hdlr)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(level)
     return logger
 
 logger = create_logger()
@@ -534,6 +536,10 @@ class JSONResponse(HttpResponse):
 # batch_gen # {{{
 def batch_gen1(seq, batch_size):
     """ 
+    Usage:
+
+    >>> batch_gen1(range(10), 3)
+    ((0, 1, 2), (3, 4, 5), (6, 7, 8), (9,))
     to be used when length of seq is known.
     makes one slice call per batch, in case of django db api this is faster
     """
@@ -551,3 +557,108 @@ def batch_gen2(seq, batch_size):
     yield values
 # }}}
 
+# cacheable # {{{ 
+def cacheable(cache_key, timeout=3600):
+    """ Usage:
+
+    class SomeClass(models.Model):
+        # fields [id, name etc]
+
+        @cacheable("SomeClass_get_some_result_%(id)s")
+        def get_some_result(self):
+            # do some heavy calculations
+            return heavy_calculations()
+
+        @cacheable("SomeClass_get_something_else_%(name)s")
+        def get_something_else(self):
+            return something_else_calculator(self)
+    """
+
+    def paramed_decorator(func):
+        def decorated(self):
+            key = cache_key % self.__dict__
+            if cache.has_key(key):
+                return cache[key]
+            res = func(self)
+            cache.set(key, res, timeout)
+            return res
+        decorated.__doc__ = func.__doc__
+        decorated.__dict__ = func.__dict__
+        return decorated 
+    return paramed_decorator
+# }}} 
+
+# stales_cache # {{{ 
+def stales_cache(cache_key):
+    """ Usage:
+
+    class SomeClass(models.Model):
+        # fields
+        name = CharField(...)
+
+        @stales_cache("SomeClass_some_key_that_depends_on_name_%(name)")
+        @stales_cache("SomeClass_some_other_key_that_depends_on_name_%(name)")
+        def update_name(self, new_name):
+            self.name = new_name
+            self.save()
+    """
+    def paramed_decorator(func):
+        def decorated(self, *args, **kw):
+            key = cache_key % self.__dict__
+            cache.delete(key)
+            return func(self, *args, **kw)
+        decorated.__doc__ = func.__doc__
+        decorated.__dict__ = func.__dict__
+        return decorated
+    return paramed_decorator
+# }}} 
+
+# ajax_validator  # {{{
+def ajax_validator(request, form_cls):
+    """
+    Usage
+    -----
+
+    # in urls.py have something like this:
+    urlpatterns = patterns('',
+        # ... other patterns
+        (
+            r'^ajax/validate-registration-form/$', 'ajax_validator',
+            { 'form_cls': 'myproject.accounts.forms.RegistrationForm' }
+        ),
+    )
+
+    # sample javascript code to use the validator
+    $(function(){
+        $("#id_username, #id_password, #id_password2, #id_email").blur(function(){
+            var url = "/ajax/validate-registration-form/?field=" + this.name;
+            var field = this.name;
+            $.ajax({
+                url: url, data: $("#registration_form").serialize(),
+                type: "post", dataType: "json",    
+                success: function (response){ 
+                    if(response.valid)
+                    {
+                        $("#"+field+"_errors").html("Sounds good");
+                    }
+                    else
+                    {
+                        $("#"+field+"_errors").html(response.errors);
+                    }
+                }
+            });
+        });
+    });
+    """
+    mod_name, form_name = get_mod_func(form_cls)
+    form_cls = getattr(__import__(mod_name, {}, {}, ['']), form_name)
+    form = form_cls(request.POST)
+    if "field" in request.GET: 
+        errors = form.errors.get(request.GET["field"])
+        if errors: errors = errors.as_text()
+    else:
+        errors = form.errors
+    return JSONResponse(
+        { "errors": errors, "valid": not errors }
+    ) 
+# }}}
