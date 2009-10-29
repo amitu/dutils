@@ -8,6 +8,7 @@ from django.http import HttpResponseServerError, HttpResponseRedirect
 from django.http import HttpResponse
 from django.core.cache import cache
 from django.core.urlresolvers import get_mod_func
+from django.template.defaultfilters import filesizeformat
 
 import time, random, re, os, sys, traceback
 from hashlib import md5
@@ -662,3 +663,34 @@ def ajax_validator(request, form_cls):
         { "errors": errors, "valid": not errors }
     ) 
 # }}}
+
+# SizeAndTimeMiddleware # {{{ 
+class SizeAndTimeMiddleware(object):
+    """
+    Usage:
+
+    Used for showing size of the page in human readable format and time
+    taken to generate the page on the server. To use it, in your base
+    template, somewhere put the line:
+
+    <!-- ____SIZE_AND_DATE_PLACEHOLDER____ -->
+
+    May be used on production.
+    """
+    def process_request(self, request):
+        request._request_start_time = time.time() 
+
+    def process_response(self, request, response):
+        if not hasattr(request, "_request_start_time"): return response
+        if response['Content-Type'].split(';')[0] in (
+            'text/html', 'application/xhtml+xml'
+        ):
+            response.content = smart_unicode(response.content).replace(
+                "<!-- ____SIZE_AND_DATE_PLACEHOLDER____ -->", 
+                "(%s, %0.3f seconds)" % (
+                    filesizeformat(len(response.content)),
+                    time.time() - request._request_start_time,
+                )
+            )
+        return response
+# }}} 
