@@ -356,7 +356,7 @@ def update_jpg(key, img, delete_key=None, format="jpeg"):
 # }}}
 
 # get_content_from_path #{{{
-def get_content_from_path(p):
+def get_content_from_path(p, number_of_tries=1):
     if settings.APP_DIR.joinpath(p).exists():
         return file(
             settings.APP_DIR.joinpath(p), 'rb'
@@ -370,7 +370,14 @@ def get_content_from_path(p):
             settings.APP_DIR.joinpath(p[1:]), 'rb'
         ).read()
     else:
-        return urllib2.urlopen(p).read()
+        exceptions = []
+        for i in range(number_of_tries):
+            try:
+                return urllib2.urlopen(p).read()
+            except Exception, e:
+                exceptions.append(e)
+        # we are still here, meaning we had exception thrice
+        raise exceptions[0]
 #}}}
 
 # send_html_mail # {{{
@@ -756,4 +763,11 @@ def copy_file_to_s3(p, key, bucket):
         s3_operation_lock.release()
 
     return final_url
+# }}} 
+
+# tee # {{{ 
+def tee(arg): 
+    """ prints the input and returns it """
+    print arg
+    return arg
 # }}} 
