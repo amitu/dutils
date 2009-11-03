@@ -45,7 +45,7 @@ def batch(value, arg):
     return list(batch_gen1(value, int(arg)))
 # }}}
 
-# month_number_to_name
+# month_number_to_name # {{{ 
 @register.filter
 def month_number_to_name(value, arg="1"):
     return {
@@ -64,4 +64,46 @@ def month_number_to_name(value, arg="1"):
             "12": "Dec",
         }
     }[arg][value]
+# }}} 
+
+# truncate_chars # {{{ 
+@register.filter
+def truncate_chars(s, num):
+    """
+    Template filter to truncate a string to at most num characters respecting 
+    word boundaries.
+    """
+    s = force_unicode(s)
+    length = int(num)
+    if len(s) > length:
+        length = length - 3
+        if s[length-1] == ' ' or s[length] == ' ':
+            s = s[:length].strip()
+        else:
+            words = s[:length].split()
+            if len(words) > 1:
+                del words[-1]
+            s = u' '.join(words)
+        s += '...'
+    return s
+truncate_chars = allow_lazy(truncate_chars, unicode)
+# }}} 
+
+# truncatechars # {{{ 
+def truncatechars(value, arg):
+    """
+    Truncates a string after a certain number of characters, but respects word 
+    boundaries.
+    
+    Argument: Number of characters to truncate after.
+    """
+    try:
+        length = int(arg)
+    except ValueError: # If the argument is not a valid integer.
+        return value # Fail silently.
+    return truncate_chars(value, length)
+truncatechars.is_safe = True
+truncatechars = stringfilter(truncatechars)
+
+register.filter(truncatechars)
 # }}} 
