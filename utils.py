@@ -158,7 +158,7 @@ def context_preprocessor(request):
 # RequestForm # {{{ 
 class RequestForm(forms.Form):
     def __init__(self, request, *args, **kw):
-        super(RequestForm).__init__(*args, **kw)
+        super(RequestForm, self).__init__(*args, **kw)
         self.request = request
 # }}} 
 
@@ -775,6 +775,10 @@ def copy_file_to_s3(p, key, bucket):
 # cleaned_data # {{{
 def clean_data(func):
     def decorated(self, *args, **kw):
-        return func(self, self.cleaned_data.get, *args, **kw)
+        d = self.cleaned_data.get
+        return func(self, d(func.__name__[6:]), d, *args, **kw)
+    decorated.__doc__ = func.__doc__
+    decorated.__dict__ = func.__dict__
+    decorated.__name__ = func.__name__
     return decorated
 # }}}
