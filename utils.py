@@ -5,6 +5,7 @@ from django import forms
 from django.core.files.base import ContentFile
 from django.utils.encoding import smart_str, smart_unicode
 from django.http import HttpResponseServerError, HttpResponseRedirect
+from django.template import RequestContext
 from django.utils.translation import force_unicode
 from django.http import HttpResponse, Http404
 from django.core.cache import cache
@@ -720,7 +721,8 @@ class LazyEncoder(simplejson.JSONEncoder):
 
 # ajax_form_handler # {{{
 def ajax_form_handler(
-    request, form_cls, require_login=True, allow_get=settings.DEBUG
+    request, form_cls, require_login=False, allow_get=settings.DEBUG,
+    next=None, template=None
 ):
     """
     Some ajax heavy apps require a lot of views that are merely a wrapper
@@ -737,8 +739,15 @@ def ajax_form_handler(
         mod_name, form_name = get_mod_func(form_cls)
         form_cls = getattr(__import__(mod_name, {}, {}, ['']), form_name)
     form = form_cls(request, request.REQUEST)
+    if next: assert template, "template required when next provided"
     if form.is_valid():
+        if next: return HttpResponseRedirect(next)
         return JSONResponse({ 'success': True, 'response': form.save() })
+    if template:
+        return render_to_response(
+            template, {"form": form}, 
+            context_instance=RequestContext(request)
+        )
     return JSONResponse({ 'success': False, 'errors': form.errors })
 # }}}
 
