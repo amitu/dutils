@@ -5,6 +5,7 @@ from django.utils.encoding import force_unicode
 from django.utils.functional import allow_lazy
 from django.conf import settings
 from django.utils.safestring import mark_safe
+from django.core.urlresolvers import get_mod_func
 
 import time, urllib2
 import os
@@ -107,3 +108,12 @@ truncatechars = stringfilter(truncatechars)
 
 register.filter(truncatechars)
 # }}} 
+
+# user_visible # {{{
+@register.filter
+def user_visible(value, arg):
+    mod_name, choices_name = get_mod_func(arg)
+    choices = getattr(__import__(mod_name, {}, {}, ['']), choices_name)
+    choices = dict(choices)
+    return choices.get(value, value)
+# }}}
