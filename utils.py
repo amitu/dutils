@@ -12,6 +12,7 @@ from django.core.cache import cache
 from django.core.urlresolvers import get_mod_func
 from django.template.defaultfilters import filesizeformat
 from django.utils.functional import Promise
+from django.shortcuts import render_to_response
 
 import time, random, re, os, sys, traceback
 from hashlib import md5
@@ -726,30 +727,45 @@ class LazyEncoder(simplejson.JSONEncoder):
             return super(LazyEncoder, self).default(o)
 # }}} 
 
-# ajax_form_handler # {{{
-def ajax_form_handler(
-    request, form_cls, require_login=False, allow_get=settings.DEBUG,
-    next=None, template=None
+# form_handler # {{{
+def form_handler(
+    request, form_cls, require_login=False, block_get=False,
+    next=None, template=None, 
+    login_url=getattr(settings, "LOGIN_URL", "/login/")
 ):
     """
     Some ajax heavy apps require a lot of views that are merely a wrapper
     around the form. This generic view can be used for them.
     """
-    if callable(require_login): require_login = require_login()
-    if require_login and not request.user.is_authenticated(): 
-        raise Http404("login required")
-    if not allow_get and request.method != "POST":
+    if callable(require_login): 
+        require_login = require_login(request)
+    elif require_login:
+        require_login = not request.user.is_authenticated()
+    if require_login:
+        if require_login == "404":
+            raise Http404("login required")
+        return HttpResponseRedirect(
+            "%s?next=%s" % (login_url, request.path)
+        )
+    if block_get and request.method != "POST":
         raise Http404("only post allowed")
     if isinstance(form_cls, basestring):
         # can take form_cls of the form: "project.app.forms.FormName"
         from django.core.urlresolvers import get_mod_func
         mod_name, form_name = get_mod_func(form_cls)
         form_cls = getattr(__import__(mod_name, {}, {}, ['']), form_name)
-    form = form_cls(request, request.REQUEST)
     if next: assert template, "template required when next provided"
+    if template and request.method == "GET":
+        return render_to_response(
+            template, {"form": form_cls(request)}, 
+            context_instance=RequestContext(request)
+        )
+    form = form_cls(request, request.REQUEST)
     if form.is_valid():
+        saved = form.save()
         if next: return HttpResponseRedirect(next)
-        return JSONResponse({ 'success': True, 'response': form.save() })
+        if template: return HttpResponseRedirect(saved)
+        return JSONResponse({ 'success': True, 'response': saved })
     if template:
         return render_to_response(
             template, {"form": form}, 
