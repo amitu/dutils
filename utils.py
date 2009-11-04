@@ -155,6 +155,13 @@ def context_preprocessor(request):
     return d
 # }}}
 
+# RequestForm # {{{ 
+class RequestForm(forms.Form):
+    def __init__(self, request, *args, **kw):
+        super(RequestForm).__init__(*args, **kw)
+        self.request = request
+# }}} 
+
 # profane words # {{{ 
 class SacredField(forms.CharField):
     def clean(self, value):
@@ -764,3 +771,10 @@ def copy_file_to_s3(p, key, bucket):
 
     return final_url
 # }}} 
+
+# cleaned_data # {{{
+def clean_data(func):
+    def decorated(self, *args, **kw):
+        return func(self, self.cleaned_data.get, *args, **kw)
+    return decorated
+# }}}

@@ -1,4 +1,3 @@
-
 import re
 import sys
 import urllib
@@ -13,7 +12,7 @@ def getSplits(text,splitLength=4500):
     return (text[index:index+splitLength] for index in xrange(0,len(text),splitLength))
 
 
-def translate(text,src='', to='hi'):
+def translate(text, src='', to='hi'):
     '''
     A Python Wrapper for Google AJAX Language API:
     * Uses Google Language Detection, in cases source language is not provided with the source text
