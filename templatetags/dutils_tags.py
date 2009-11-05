@@ -7,8 +7,7 @@ from django.conf import settings
 from django.utils.safestring import mark_safe
 from django.core.urlresolvers import get_mod_func
 
-import time, urllib2
-import os
+import time, urllib2, os
 
 from dutils.utils import logger, batch_gen1
 # }}}
@@ -117,3 +116,19 @@ def user_visible(value, arg):
     choices = dict(choices)
     return choices.get(value, value)
 # }}}
+
+# clevercss tag # {{{ 
+@register.tag(name="clevercss")
+def do_clevercss(parser, token):
+    nodelist = parser.parse(('endclevercss',))
+    parser.delete_first_token()
+    return CleverCSSNode(nodelist)
+
+class CleverCSSNode(template.Node):
+    def __init__(self, nodelist):
+        self.nodelist = nodelist
+    def render(self, context):
+        import CleverCSSNode
+        output = self.nodelist.render(context)
+        return clevercss.convert(output)
+# }}} 
