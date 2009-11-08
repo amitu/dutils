@@ -3,6 +3,22 @@ import sys
 import urllib
 from django.utils import simplejson
 
+LANGUAGES_SUPPORTED_FOR_TRANSLATION = { 
+    "af": "Afrikaans", "sq":"Albanian", "ar": "Arabic", "be": "Belarusian", 
+    "bg": "Bulgarian", "ca": "Catalan", "zh-CN":"Chinese", "hr": "Croatian",
+    "cs":"Czech", "da":"Danish", "nl":"Dutch", "en": "English", 
+    "et": "Estonian", "tl": "Filipino", "fi": "Finnish", "fr": "French", 
+    "gl": "Galician", "de": "German", "el": "Greek", "iw": "Hebrew", 
+    "hi": "Hindi", "hu": "Hungarian", "is": "Icelandic", "id": "Indonesian", 
+    "ga": "Irish", "it": "Italian", "ja": "Japanese", "ko": "Korean", 
+    "lv": "Latvian", "lt": "Lithuanian", "mk": "Macedonian", "ms": "Malay",
+    "mt": "Maltese", "no": "Norwegian", "fa": "Persian", "pl": "Polish",
+    "pt": "Portuguese", "ro": "Romanian", "ru": "Russian", "sr": "Serbian", 
+    "sk": "Slovak", "sl": "Slovenian", "es": "Spanish", "sw": "Swahili", 
+    "sv": "Swedish", "th": "Thai", "tr": "Turkish", "uk": "Ukrainian", 
+    "vi": "Vietnamese", "cy": "Welsh", "yi": "Yiddish"
+}
+
 baseUrl = "http://ajax.googleapis.com/ajax/services/language/translate"
 
 def getSplits(text,splitLength=4500):
@@ -12,12 +28,15 @@ def getSplits(text,splitLength=4500):
     return (text[index:index+splitLength] for index in xrange(0,len(text),splitLength))
 
 
-def translate(text, src='', to='hi'):
+def translate(text, to='hi', src='en'):
     '''
     A Python Wrapper for Google AJAX Language API:
     * Uses Google Language Detection, in cases source language is not provided with the source text
     * Splits up text if it's longer then 4500 characters, as a limit put up by the API
     '''
+
+    assert to in LANGUAGES_SUPPORTED_FOR_TRANSLATION
+    assert src in LANGUAGES_SUPPORTED_FOR_TRANSLATION
 
     params = ({'langpair': '%s|%s' % (src, to),
              'v': '1.0'

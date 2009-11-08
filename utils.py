@@ -798,3 +798,12 @@ def clean_data(func):
     decorated.__name__ = func.__name__
     return decorated
 # }}}
+
+"""
+template helpers
+----------------
+data profiles: eg registration with error
+    stored in db as json
+all templates in templates folder
+case: data profile to template mapping
+"""
