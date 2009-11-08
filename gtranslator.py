@@ -2,6 +2,7 @@ import re
 import sys
 import urllib
 from django.utils import simplejson
+from django.template.defaultfilters import slugify
 
 LANGUAGES_SUPPORTED_FOR_TRANSLATION = { 
     "af": "Afrikaans", "sq":"Albanian", "ar": "Arabic", "be": "Belarusian", 
@@ -19,6 +20,13 @@ LANGUAGES_SUPPORTED_FOR_TRANSLATION = {
     "vi": "Vietnamese", "cy": "Welsh", "yi": "Yiddish"
 }
 
+LANGUAGES_SLUGS_SUPPORTED_FOR_TRANSLATION = dict(
+    [
+        (slugify(v), k) 
+        for k, v in LANGUAGES_SUPPORTED_FOR_TRANSLATION.items()
+    ]
+)
+
 baseUrl = "http://ajax.googleapis.com/ajax/services/language/translate"
 
 def getSplits(text,splitLength=4500):
@@ -35,8 +43,13 @@ def translate(text, to='hi', src='en'):
     * Splits up text if it's longer then 4500 characters, as a limit put up by the API
     '''
 
-    assert to in LANGUAGES_SUPPORTED_FOR_TRANSLATION
-    assert src in LANGUAGES_SUPPORTED_FOR_TRANSLATION
+    if to == src: return text
+
+    if to not in LANGUAGES_SUPPORTED_FOR_TRANSLATION:
+        to = LANGUAGES_SLUGS_SUPPORTED_FOR_TRANSLATION[to]
+
+    if src not in LANGUAGES_SUPPORTED_FOR_TRANSLATION:
+        src = LANGUAGES_SLUGS_SUPPORTED_FOR_TRANSLATION[src]
 
     params = ({'langpair': '%s|%s' % (src, to),
              'v': '1.0'
@@ -53,7 +66,7 @@ def translate(text, to='hi', src='en'):
 
 
 def test():
-    msg = "      Write something You want to be translated to English,\n"\
+    msg = "      Write something You want to be translated to Hindi,\n"\
         "      Enter ctrl+c to exit"
     print msg
     while True:
