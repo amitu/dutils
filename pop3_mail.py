@@ -91,6 +91,7 @@ def get_mails(**options):
         print uid, message["subject"], message["from"], message["date"]
         if not options["leave"]: pop3.dele(i)
         new_pop3_mail.send(sender=pop3, uid=uid, mail=message)
+    pop3.quit()
 # }}}
 
 # get_attachment_data # {{{ 
