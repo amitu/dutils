@@ -92,3 +92,20 @@ def get_mails(**options)
         if not options["leave"]: pop3.dele(i)
         new_pop3_mail.send(sender=pop3, uid=uid, mail=message)
 # }}}
+
+# get_attachment_data # {{{ 
+def get_attachment_data(attachment):
+    content_type = attachment.get_content_type()
+    content = attachment.get_payload(decode=True)
+    print attachment.items()
+    file_name = attachment.get_filename()
+    # TODO: try one more attempt for filename
+    if not file_name:
+        file_name = utils.uuid()
+    print file_name
+    if "Content-ID" in attachment:
+        found_cid = True
+        cid = attachment["Content-ID"][1:-1]
+    else: cid =""
+    return file_name, cid, content_type, content
+# }}} 
