@@ -7,7 +7,6 @@ from django.utils.encoding import smart_unicode
 from dutils.signals import new_pop3_mail
 # }}} 
 
-parser = html5lib.HTMLParser(tokenizer=sanitizer.HTMLSanitizer)
 mail_re = re.compile(r'[\w\-][\w\-\.]+@[\w\-][\w\-\.]+[a-zA-Z]{1,4}')
 
 # print_structure # {{{ 
@@ -54,6 +53,7 @@ def process_main_part(main_part):
 
 # sanitize_html # {{{ 
 def sanitize_html(html):
+    parser = html5lib.HTMLParser(tokenizer=sanitizer.HTMLSanitizer)
     return parser.parse(html).toxml()
 # }}} 
 
@@ -71,7 +71,7 @@ def extract_html_and_attachments(mime_msg):
 # }}} 
 
 # get_mails # {{{
-def get_mails(**options)
+def get_mails(**options):
     print options
     if options["ssl"]:
         pop3 = poplib.POP3_SSL(options["host"], options["port"])
