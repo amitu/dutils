@@ -2,6 +2,7 @@
 import html5lib, re, poplib, rfc822
 from html5lib import sanitizer
 from email import parser
+from email.header import decode_header
 
 from django.utils.encoding import smart_unicode
 from dutils.signals import new_pop3_mail
@@ -86,7 +87,7 @@ def get_mails(**options):
         message = "\n".join(message[1])
         message = parser.Parser().parsestr(message)
         message.id = uid
-        message.subject = message["subject"]
+        message.subject = decode_header(message["subject"])[0]
         message.sender = rfc822.parseaddr(message["from"])[1]
         print uid, message["subject"], message["from"], message["date"]
         if not options["leave"]: pop3.dele(i)
