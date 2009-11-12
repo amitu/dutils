@@ -2,12 +2,9 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 
-import poplib, rfc822
-from email import parser
-
 from optparse import make_option
 
-from dutils.signals import new_pop3_mail
+from dutils.pop3_mail import get_mails
 
 class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
@@ -67,23 +64,5 @@ class Command(BaseCommand):
     help = 'Get mails from POP3 server. Sends signals. Supports SSL.'
 
     def handle(self, *args, **options):
-        print options
-        if options["ssl"]:
-            pop3 = poplib.POP3_SSL(options["host"], options["port"])
-        else:
-            pop3 = poplib.POP3(options["host"], options["port"])
-        print pop3.getwelcome()
-        print pop3.user(options["user"])
-        print pop3.pass_(options["password"])
-        for i_uid in pop3.uidl()[1][:options["number"]+1]:
-            i, uid = i_uid.split()
-            message = pop3.retr(i)
-            message = "\n".join(message[1])
-            message = parser.Parser().parsestr(message)
-            message.id = uid
-            message.subject = message["subject"]
-            message.sender = rfc822.parseaddr(message["from"])[1]
-            print uid, message["subject"], message["from"], message["date"]
-            if not options["leave"]: pop3.dele(i)
-            new_pop3_mail.send(sender=pop3, uid=uid, mail=message)
+        get_mails(**options)
 

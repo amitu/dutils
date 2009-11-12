@@ -1,6 +1,14 @@
-import html5lib, re
-from django.utils.encoding import smart_unicode
+# imports # {{{ 
+import html5lib, re, poplib, rfc822
 from html5lib import sanitizer
+from email import parser
+
+from django.utils.encoding import smart_unicode
+from dutils.signals import new_pop3_mail
+# }}} 
+
+parser = html5lib.HTMLParser(tokenizer=sanitizer.HTMLSanitizer)
+mail_re = re.compile(r'[\w\-][\w\-\.]+@[\w\-][\w\-\.]+[a-zA-Z]{1,4}')
 
 # print_structure # {{{ 
 def print_structure(part, spacer=""):
@@ -44,9 +52,6 @@ def process_main_part(main_part):
     return smart_unicode(html, errors="ignore"), parts
 # }}} 
 
-parser = html5lib.HTMLParser(tokenizer=sanitizer.HTMLSanitizer)
-mail_re = re.compile(r'[\w\-][\w\-\.]+@[\w\-][\w\-\.]+[a-zA-Z]{1,4}')
-
 # sanitize_html # {{{ 
 def sanitize_html(html):
     return parser.parse(html).toxml()
@@ -64,3 +69,26 @@ def extract_html_and_attachments(mime_msg):
     attachments += cid_attachments
     return html, attachments
 # }}} 
+
+# get_mails # {{{
+def get_mails(**options)
+    print options
+    if options["ssl"]:
+        pop3 = poplib.POP3_SSL(options["host"], options["port"])
+    else:
+        pop3 = poplib.POP3(options["host"], options["port"])
+    print pop3.getwelcome()
+    print pop3.user(options["user"])
+    print pop3.pass_(options["password"])
+    for i_uid in pop3.uidl()[1][:options["number"]+1]:
+        i, uid = i_uid.split()
+        message = pop3.retr(i)
+        message = "\n".join(message[1])
+        message = parser.Parser().parsestr(message)
+        message.id = uid
+        message.subject = message["subject"]
+        message.sender = rfc822.parseaddr(message["from"])[1]
+        print uid, message["subject"], message["from"], message["date"]
+        if not options["leave"]: pop3.dele(i)
+        new_pop3_mail.send(sender=pop3, uid=uid, mail=message)
+# }}}
