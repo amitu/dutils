@@ -6,6 +6,7 @@ from django.utils.functional import allow_lazy
 from django.conf import settings
 from django.utils.safestring import mark_safe
 from django.core.urlresolvers import get_mod_func
+from django.contrib.flatpages.models import FlatPage
 
 import time, urllib2, os
 
@@ -131,4 +132,13 @@ class CleverCSSNode(template.Node):
         import CleverCSSNode
         output = self.nodelist.render(context)
         return clevercss.convert(output)
+# }}} 
+
+# render_flatpage # {{{ 
+@register.simple_tag
+def render_flatpage(url):
+    try:
+        return FlatPage.objects.get(url=url).content
+    except FlatPage.DoesNotExist: 
+        return ""
 # }}} 
