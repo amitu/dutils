@@ -1,3 +1,25 @@
+"""
+kvds server
+
+this file provides views and urls for kvds server, that exposes a key value
+database service over variety of key value data stores. 
+
+for now it only supports tokyo tyrant.
+
+to use this, add the following:
+
+    (r'', include('dutils.kvds_server')),
+
+to your urls.py to activate and use this server.
+
+kvds server does not come with any built-in authentication, so you may not want
+to expose this to web facing sites, and use it internally only.
+
+please add the following settings:
+    TYRANT_HOST: host where tyrant server is running
+    TYRANT_PORT: port on which tyrant server is running
+
+"""
 from django.http import HttpResponse
 from django.utils import simplejson
 from django.utils.hashcompat import md5_constructor
