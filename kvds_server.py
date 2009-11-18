@@ -20,27 +20,43 @@ please add the following settings:
     TYRANT_PORT: port on which tyrant server is running
 
 """
+# imports # {{{
 from django.http import HttpResponse
 from django.utils import simplejson
 from django.utils.hashcompat import md5_constructor
 from django.conf import settings
+from django import forms
+from django.conf.urls.defaults import *
 
 import pytyrant, os, random, time
 
-import dutils as utils
+from dutils import utils
 
 ty = sty = None
 
 TYRANT_HOST = getattr(settings, "TYRANT_HOST", "localhost")
 TYRANT_PORT = getattr(settings, "TYRANT_PORT", 1978)
+# }}}
 
+# reopen_connections # {{{
 def reopen_connections():
     global ty, sty
+    print TYRANT_HOST, TYRANT_PORT
     ty = pytyrant.PyTyrant.open(TYRANT_HOST, TYRANT_PORT)
     sty = pytyrant.PyTyrant.open(TYRANT_HOST, TYRANT_PORT)
+# }}}
 
 pid = os.getpid()
 
+# single # {{{
+def single(request):
+    reopen_connections()
+    return HttpResponse(
+        ty[request.GET["key"].encode("utf-8")], mimetype="text/plain"
+    )
+# }}}
+
+# kvds # {{{
 def kvds(request):
     reopen_connections()
     utils.logger.info('kvds called')
@@ -72,8 +88,10 @@ def kvds(request):
     print "+++++++++++++"
     for v in d.values(): 
         print [ord(c) for c in v]
-    return HttpResponse(simplejson.dumps(d))
+    return HttpResponse(simplejson.dumps(d), mimetype="text/plain")
+# }}}
 
+# start_session # {{{
 def start_session(request):
     reopen_connections()
     # create a new unique sessionid, store an empty session in the same
@@ -88,7 +106,9 @@ def start_session(request):
     sty["session_%s" % sessionid] = simplejson.dumps({})
     # TODO: set expiry
     return HttpResponse(simplejson.dumps(dict(sessionid=sessionid)))
+# }}}
 
+# session # {{{
 def session(request):
     reopen_connections()
     print request.path, request.GET, request.POST
@@ -128,7 +148,9 @@ def session(request):
     else:
         session_data["user_perms"] = []
     return HttpResponse(simplejson.dumps(session_data))
+# }}}
 
+# prefix # {{{
 def prefix(request):
     print "prefix"
     reopen_connections()
@@ -136,12 +158,33 @@ def prefix(request):
     prefix_keys = []
     prefixed_keys = ty.prefix_keys(str(prefix))
     return HttpResponse(simplejson.dumps(prefixed_keys))
+# }}} 
 
-from django.conf.urls.defaults import *
+# StoreValue # {{{
+class StoreValue(utils.RequestForm):
+    key = forms.CharField(max_length=100)
+    value = forms.CharField(widget=forms.Textarea)
 
+    def save(self):
+        d = self.cleaned_data.get
+        reopen_connections()
+        ty[str(d("key"))] = str(d("value").encode("utf-8"))
+        return "/?key=%s" % d("key")
+# }}}
+
+# urls # {{{
 urlpatterns = patterns('',
     (r'^start-session/$', start_session),
     (r'^kvds/$', kvds),
+    (r'^single/$', single),
     (r'^session/$', session),
     (r'^prefix/$', prefix),
+    (
+        r'^$', 'dutils.utils.form_handler',
+        { 
+            'form_cls': 'dutils.kvds_server.StoreValue', 
+            'template': 'kvds_index.html'
+        }
+    ),
 )
+# }}}

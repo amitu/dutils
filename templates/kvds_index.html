@@ -1,0 +1,21 @@
+<html>
+    <title>kvds</title>
+    {% if request.GET.key %}
+        <p>
+           Saved 
+           <a href="/single/?key={{ request.GET.key }}">{{ request.GET.key }}</a>
+        </p>
+    {% endif %}
+    <h1>Retrive</h1>
+    <form method="get" action="/single/">
+        Key: <input type=text name="key">
+        <input type="submit" value="Save">
+    </form>
+    <h1>Store</h1>
+    <form method="post" action=".">
+        <table>
+        {{ form }}
+        </table>
+        <input type="submit" value="Save">
+    </form>
+</html>
