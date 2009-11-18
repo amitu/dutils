@@ -8,7 +8,7 @@ from django.utils.safestring import mark_safe
 from django.core.urlresolvers import get_mod_func
 from django.contrib.flatpages.models import FlatPage
 
-import time, urllib2, os
+import time, urllib2, os, hashlib
 
 from dutils.utils import logger, batch_gen1
 from dutils.kvds import utils as kvds_utils
@@ -149,3 +149,21 @@ def render_flatpage(url):
 def kvds_flatpage(key):
     return kvds_utils.kvds(key=key).get(key, "")
 # }}} 
+
+# gravatar # {{{
+@register.filter
+@stringfilter
+def gravatar(value, arg=""):
+    default = getattr(settings, "GRAVATAR_DEFAULT_URL", "identicon")
+    parts = arg.split(":")
+    if len(parts) == 0: parts = ["80", "g", default]
+    if parts[0] == "": parts = ["80", "g", default]
+    if len(parts) == 1: parts.extend(["g", default])
+    if len(parts) == 2: parts.append(default)
+    size, rating, default_image = parts
+    if not size: size = "80"
+    if not rating: rating = "g"
+    return "http://www.gravatar.com/avatar/%s.jpg?s=%s&r=%s&d=%s" % (
+        hashlib.md5(value.lower()).hexdigest(), size, rating, default_image
+    )
+# }}}
