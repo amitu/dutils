@@ -11,6 +11,7 @@ from django.contrib.flatpages.models import FlatPage
 import time, urllib2, os
 
 from dutils.utils import logger, batch_gen1
+from dutils.kvds import utils as kvds_utils
 # }}}
 
 register = template.Library()
@@ -141,4 +142,10 @@ def render_flatpage(url):
         return FlatPage.objects.get(url=url).content
     except FlatPage.DoesNotExist: 
         return ""
+# }}} 
+
+# kvds_flatpage # {{{ 
+@register.simple_tag
+def kvds_flatpage(key):
+    return kvds_utils.kvds(key=key).get(key, "")
 # }}} 
