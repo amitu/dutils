@@ -2,7 +2,6 @@ import urllib2, urllib, types
 from django.utils import simplejson
 from django.conf import settings
 
-KVDS_ROOT = getattr(settings, "KVDS_ROOT", "http://localhost:8001/")
 
 def urlencode2(d):
     a = []
@@ -20,6 +19,7 @@ def urlencode2(d):
 
 def make_request(path, data={}):
     #assert type(data) not in (type(u""), type(""))
+    KVDS_ROOT = getattr(settings, "KVDS_ROOT", "http://localhost:8001/")
     print "making request", path, urllib.urlencode(data), KVDS_ROOT
     response = simplejson.loads(
         urllib2.urlopen(
@@ -40,6 +40,7 @@ def kvds(key, value=None):
     return make_request("kvds", dict(key=key))
 
 def kvds_multi(keys):
+    KVDS_ROOT = getattr(settings, "KVDS_ROOT", "http://localhost:8001/")
     q = urlencode2({ 'key':keys })
     response = simplejson.loads(
         urllib2.urlopen(

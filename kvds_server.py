@@ -34,12 +34,12 @@ from dutils import utils
 
 ty = sty = None
 
-TYRANT_HOST = getattr(settings, "TYRANT_HOST", "localhost")
-TYRANT_PORT = getattr(settings, "TYRANT_PORT", 1978)
 # }}}
 
 # reopen_connections # {{{
 def reopen_connections():
+    TYRANT_HOST = getattr(settings, "TYRANT_HOST", "localhost")
+    TYRANT_PORT = getattr(settings, "TYRANT_PORT", 1978)
     global ty, sty
     print TYRANT_HOST, TYRANT_PORT
     ty = pytyrant.PyTyrant.open(TYRANT_HOST, TYRANT_PORT)

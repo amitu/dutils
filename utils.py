@@ -8,11 +8,9 @@ from django.http import HttpResponseServerError, HttpResponseRedirect
 from django.template import RequestContext
 from django.utils.translation import force_unicode
 from django.http import HttpResponse, Http404
-from django.core.cache import cache
 from django.core.urlresolvers import get_mod_func
 from django.template.defaultfilters import filesizeformat
 from django.utils.functional import Promise
-from django.shortcuts import render_to_response
 
 import time, random, re, os, sys, traceback
 from hashlib import md5
@@ -395,9 +393,6 @@ from email.MIMEText import MIMEText
 from smtplib import SMTP
 import email.Charset
 
-from stripogram import html2text
-from feedparser import _sanitizeHTML
-
 from dutils.messaging import messenger
 
 charset='utf-8'
@@ -411,6 +406,9 @@ def send_html_mail(
     html_template="", text_template="", sender_name="",
     html_content="", text_content="", recip_list=None, sender_formatted=""
 ):
+    from stripogram import html2text
+    from feedparser import _sanitizeHTML
+
     if not context: context = {}
     if html_template:
         html = render(context, html_template)
@@ -597,7 +595,7 @@ def cacheable(cache_key, timeout=3600):
         def get_something_else(self):
             return something_else_calculator(self)
     """
-
+    from django.core.cache import cache
     def paramed_decorator(func):
         def decorated(self):
             key = cache_key % self.__dict__
@@ -626,6 +624,7 @@ def stales_cache(cache_key):
             self.name = new_name
             self.save()
     """
+    from django.core.cache import cache
     def paramed_decorator(func):
         def decorated(self, *args, **kw):
             key = cache_key % self.__dict__
@@ -730,13 +729,15 @@ class LazyEncoder(simplejson.JSONEncoder):
 # form_handler # {{{
 def form_handler(
     request, form_cls, require_login=False, block_get=False,
-    next=None, template=None, 
-    login_url=getattr(settings, "LOGIN_URL", "/login/")
+    next=None, template=None, login_url=None, 
 ):
     """
     Some ajax heavy apps require a lot of views that are merely a wrapper
     around the form. This generic view can be used for them.
     """
+    from django.shortcuts import render_to_response
+    if login_url is None: 
+        login_url = getattr(settings, "LOGIN_URL", "/login/")
     if callable(require_login): 
         require_login = require_login(request)
     elif require_login:
@@ -807,3 +808,10 @@ data profiles: eg registration with error
 all templates in templates folder
 case: data profile to template mapping
 """
+
+# attrdict # {{{ 
+class attrdict(dict):
+    def __init__(self, *args, **kw):
+        dict.__init__(self, *args, **kw)
+        self.__dict__ = self
+# }}} 
