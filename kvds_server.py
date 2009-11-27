@@ -21,8 +21,10 @@ please add the following settings:
 
 """
 # imports # {{{
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import simplejson
+from django.template import RequestContext
+from django.shortcuts import render_to_response
 from django.utils.hashcompat import md5_constructor
 from django.conf import settings
 from django import forms
@@ -161,7 +163,7 @@ def prefix(request):
 # }}} 
 
 # StoreValue # {{{
-class StoreValue(utils.RequestForm):
+class StoreValue(forms.Form):
     key = forms.CharField(max_length=100)
     value = forms.CharField(widget=forms.Textarea)
 
@@ -172,6 +174,25 @@ class StoreValue(utils.RequestForm):
         return "/?key=%s" % d("key")
 # }}}
 
+def index(request):
+    reopen_connections()
+    if request.method == "POST":
+        form = StoreValue(request.POST)
+        if form.is_valid():
+            return HttpResponseRedirect(form.save())
+    else:
+        initials = {}
+        if "key" in request.GET:
+            initials = { 
+                "key": request.GET["key"],
+                "value": ty[str(request.GET["key"])]
+            }
+        form = StoreValue(initial=initials)
+    return render_to_response(
+        "kvds_index.html", { "form": form }, 
+        context_instance=RequestContext(request)
+    )
+
 # urls # {{{
 urlpatterns = patterns('',
     (r'^start-session/$', start_session),
@@ -179,12 +200,6 @@ urlpatterns = patterns('',
     (r'^single/$', single),
     (r'^session/$', session),
     (r'^prefix/$', prefix),
-    (
-        r'^$', 'dutils.utils.form_handler',
-        { 
-            'form_cls': 'dutils.kvds_server.StoreValue', 
-            'template': 'kvds_index.html'
-        }
-    ),
+    (r'^$', index),
 )
 # }}}
