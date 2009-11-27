@@ -11,6 +11,7 @@ from django.http import HttpResponse, Http404
 from django.core.urlresolvers import get_mod_func
 from django.template.defaultfilters import filesizeformat
 from django.utils.functional import Promise
+from django.db.models.query import QuerySet
 
 import time, random, re, os, sys, traceback
 from hashlib import md5
@@ -566,7 +567,7 @@ def batch_gen1(seq, batch_size):
     makes one slice call per batch, in case of django db api this is faster
     """
 
-    if hasattr(seq, "count"): #4739, not everything django is pragmatic
+    if isinstance(seq, QuerySet): #4739, not everything django is pragmatic
         length = seq.count()
     else:
         length = len(seq)
