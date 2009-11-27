@@ -15,7 +15,7 @@ from django.db.models.query import QuerySet
 
 import time, random, re, os, sys, traceback
 from hashlib import md5
-import urllib2, urllib, threading
+import urllib2, urllib, threading, cgi
 from PIL import Image
 
 import logging
@@ -820,3 +820,19 @@ class attrdict(dict):
         dict.__init__(self, *args, **kw)
         self.__dict__ = self
 # }}} 
+
+# get_url_with_params # {{{
+def get_url_with_params(request, path_override=None, without=None):
+    if path_override: path = path_override
+    else: path = request.path
+    querystring = request.META.get("QUERY_STRING")
+    if not querystring: querystring = ""
+    query_dict = dict(cgi.parse_qsl(querystring))
+    if without and without in query_dict:
+        del query_dict[without]
+    querystring = urllib.urlencode(query_dict)
+    if querystring:
+        return "%s?%s&" % ( path, querystring )
+    else:
+        return "%s?" % path
+#}}}

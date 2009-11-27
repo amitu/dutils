@@ -4,15 +4,16 @@ import cgi, urllib
 
 register = template.Library()
 
+import dutils
+
 @register.inclusion_tag('paginator.html', takes_context=True)
 def paginator(context, adjacent_pages=2):
     """
     To be used in conjunction with the object_list generic view.
 
-    Adds pagination context variables for use in displaying first, adjacent and
-    last page links in addition to those created by the object_list generic
-    view.
-
+    Adds pagination context variables for use in displaying first, adjacent
+    and last page links in addition to those created by the object_list
+    generic view.
     """
     page_numbers = [
         n 
@@ -22,16 +23,9 @@ def paginator(context, adjacent_pages=2):
         ) 
         if n > 0 and n <= context['pages']
     ]
-    path = context.get("paginator_path_override", context["request"].path)
-    querystring = context["request"].META.get("QUERY_STRING")
-    if not querystring: querystring = ""
-    query_dict = dict(cgi.parse_qsl(querystring))
-    if "page" in query_dict: del query_dict["page"]
-    querystring = urllib.urlencode(query_dict)
-    if querystring:
-        path = "%s?%s&" % ( path, querystring )
-    else: 
-        path = "%s?" % path
+    path = dutils.get_url_with_params(
+        request, context.get("paginator_path_override"), without="page"
+    )
 
     return {
         'hits': context['hits'],
