@@ -364,7 +364,23 @@ def update_jpg(key, img, delete_key=None, format="jpeg"):
 # }}}
 
 # get_content_from_path #{{{
-def get_content_from_path(p, number_of_tries=1):
+def get_content_from_path(p, data=None, number_of_tries=1):
+    if (
+        p.startswith("http://") or 
+        p.startswith("ftp://") or 
+        p.startswith("https://")
+    ):
+        exceptions = []
+        for i in range(number_of_tries):
+            try:
+                if data:
+                    return urllib2.urlopen(p, data).read()
+                else:
+                    return urllib2.urlopen(p).read()
+            except Exception, e:
+                exceptions.append(e)
+        # we are still here, meaning we had exception thrice
+        raise exceptions[0]
     if settings.APP_DIR.joinpath(p).exists():
         return file(
             settings.APP_DIR.joinpath(p), 'rb'
@@ -377,15 +393,7 @@ def get_content_from_path(p, number_of_tries=1):
         return file(
             settings.APP_DIR.joinpath(p[1:]), 'rb'
         ).read()
-    else:
-        exceptions = []
-        for i in range(number_of_tries):
-            try:
-                return urllib2.urlopen(p).read()
-            except Exception, e:
-                exceptions.append(e)
-        # we are still here, meaning we had exception thrice
-        raise exceptions[0]
+    raise IOError
 #}}}
 
 # send_html_mail # {{{
