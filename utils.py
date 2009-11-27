@@ -566,7 +566,11 @@ def batch_gen1(seq, batch_size):
     makes one slice call per batch, in case of django db api this is faster
     """
 
-    for i in range(0, len(seq), batch_size):
+    if hasattr(seq, "count"): #4739, not everything django is pragmatic
+        length = seq.count()
+    else:
+        length = len(seq)
+    for i in range(0, length, batch_size):
         yield seq[i:i+batch_size]
 
 def batch_gen2(seq, batch_size):
