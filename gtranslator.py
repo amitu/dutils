@@ -125,13 +125,14 @@ def translate(text, to='hi', src='en'):
     params = {'langpair': '%s|%s' % (src, to), 'v': '1.0' }
     retText=''
     for text in get_splits(text):
-            params['q'] = text
-            params = urllib.urlencode(
-                dict([(k, v.encode('utf-8')) for k, v in params.items()])
-            )
-            resp = simplejson.load(
-                urllib.urlopen('%s' % (baseUrl), data = params)
-            )
+        params['q'] = text
+        params = urllib.urlencode(
+            dict([(k, v.encode('utf-8')) for k, v in params.items()])
+        )
+        resp = simplejson.load(
+            urllib.urlopen('%s' % (baseUrl), data = params)
+        )
+        if resp['responseData']:
             retText += resp['responseData']['translatedText']
     return retText
 
