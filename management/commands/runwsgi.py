@@ -18,7 +18,9 @@ DEFAULT_PORT = getattr(settings, "WSGI_PORT", 8000)
 class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
         make_option("-h", "--host", dest="host", default=DEFAULT_HOST),
-        make_option("-p", "--port", dest="port", default=DEFAULT_PORT),
+        make_option(
+            "-p", "--port", dest="port", default=DEFAULT_PORT, type="int"
+        ),
         make_option("-d", "--daemon", dest="daemonize", action="store_true"),
     )
     requires_model_validation = False
