@@ -3,7 +3,6 @@ import re
 import sys
 import urllib
 from django.utils import simplejson
-from django.template.defaultfilters import slugify
 from dutils.gtranslator_constants import *
 # }}} 
 

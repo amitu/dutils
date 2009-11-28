@@ -1,3 +1,4 @@
+from django.template.defaultfilters import slugify
 LANGUAGES_SUPPORTED_FOR_TRANSLATION = { 
     "af": "Afrikaans", "sq":"Albanian", "ar": "Arabic", "be": "Belarusian", 
     "bg": "Bulgarian", "ca": "Catalan", "zh-CN":"Chinese", "hr": "Croatian",
