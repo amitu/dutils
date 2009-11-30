@@ -8,15 +8,14 @@ from django.http import HttpResponseServerError, HttpResponseRedirect
 from django.template import RequestContext
 from django.utils.translation import force_unicode
 from django.http import HttpResponse, Http404
-from django.core.cache import cache
 from django.core.urlresolvers import get_mod_func
 from django.template.defaultfilters import filesizeformat
 from django.utils.functional import Promise
-from django.shortcuts import render_to_response
+from django.db.models.query import QuerySet
 
 import time, random, re, os, sys, traceback
 from hashlib import md5
-import urllib2, urllib, threading
+import urllib2, urllib, threading, cgi
 from PIL import Image
 
 import logging
@@ -365,7 +364,23 @@ def update_jpg(key, img, delete_key=None, format="jpeg"):
 # }}}
 
 # get_content_from_path #{{{
-def get_content_from_path(p, number_of_tries=1):
+def get_content_from_path(p, data=None, number_of_tries=1):
+    if (
+        p.startswith("http://") or 
+        p.startswith("ftp://") or 
+        p.startswith("https://")
+    ):
+        exceptions = []
+        for i in range(number_of_tries):
+            try:
+                if data:
+                    return urllib2.urlopen(p, data).read()
+                else:
+                    return urllib2.urlopen(p).read()
+            except Exception, e:
+                exceptions.append(e)
+        # we are still here, meaning we had exception thrice
+        raise exceptions[0]
     if settings.APP_DIR.joinpath(p).exists():
         return file(
             settings.APP_DIR.joinpath(p), 'rb'
@@ -378,15 +393,7 @@ def get_content_from_path(p, number_of_tries=1):
         return file(
             settings.APP_DIR.joinpath(p[1:]), 'rb'
         ).read()
-    else:
-        exceptions = []
-        for i in range(number_of_tries):
-            try:
-                return urllib2.urlopen(p).read()
-            except Exception, e:
-                exceptions.append(e)
-        # we are still here, meaning we had exception thrice
-        raise exceptions[0]
+    raise IOError
 #}}}
 
 # send_html_mail # {{{
@@ -394,9 +401,6 @@ from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from smtplib import SMTP
 import email.Charset
-
-from stripogram import html2text
-from feedparser import _sanitizeHTML
 
 from dutils.messaging import messenger
 
@@ -411,6 +415,9 @@ def send_html_mail(
     html_template="", text_template="", sender_name="",
     html_content="", text_content="", recip_list=None, sender_formatted=""
 ):
+    from stripogram import html2text
+    from feedparser import _sanitizeHTML
+
     if not context: context = {}
     if html_template:
         html = render(context, html_template)
@@ -568,7 +575,11 @@ def batch_gen1(seq, batch_size):
     makes one slice call per batch, in case of django db api this is faster
     """
 
-    for i in range(0, len(seq), batch_size):
+    if isinstance(seq, QuerySet): #4739, not everything django is pragmatic
+        length = seq.count()
+    else:
+        length = len(seq)
+    for i in range(0, length, batch_size):
         yield seq[i:i+batch_size]
 
 def batch_gen2(seq, batch_size):
@@ -597,7 +608,7 @@ def cacheable(cache_key, timeout=3600):
         def get_something_else(self):
             return something_else_calculator(self)
     """
-
+    from django.core.cache import cache
     def paramed_decorator(func):
         def decorated(self):
             key = cache_key % self.__dict__
@@ -626,6 +637,7 @@ def stales_cache(cache_key):
             self.name = new_name
             self.save()
     """
+    from django.core.cache import cache
     def paramed_decorator(func):
         def decorated(self, *args, **kw):
             key = cache_key % self.__dict__
@@ -730,13 +742,15 @@ class LazyEncoder(simplejson.JSONEncoder):
 # form_handler # {{{
 def form_handler(
     request, form_cls, require_login=False, block_get=False,
-    next=None, template=None, 
-    login_url=getattr(settings, "LOGIN_URL", "/login/")
+    next=None, template=None, login_url=None, 
 ):
     """
     Some ajax heavy apps require a lot of views that are merely a wrapper
     around the form. This generic view can be used for them.
     """
+    from django.shortcuts import render_to_response
+    if login_url is None: 
+        login_url = getattr(settings, "LOGIN_URL", "/login/")
     if callable(require_login): 
         require_login = require_login(request)
     elif require_login:
@@ -904,3 +918,26 @@ data profiles: eg registration with error
 all templates in templates folder
 case: data profile to template mapping
 """
+
+# attrdict # {{{ 
+class attrdict(dict):
+    def __init__(self, *args, **kw):
+        dict.__init__(self, *args, **kw)
+        self.__dict__ = self
+# }}} 
+
+# get_url_with_params # {{{
+def get_url_with_params(request, path_override=None, without=None):
+    if path_override: path = path_override
+    else: path = request.path
+    querystring = request.META.get("QUERY_STRING")
+    if not querystring: querystring = ""
+    query_dict = dict(cgi.parse_qsl(querystring))
+    if without and without in query_dict:
+        del query_dict[without]
+    querystring = urllib.urlencode(query_dict)
+    if querystring:
+        return "%s?%s&" % ( path, querystring )
+    else:
+        return "%s?" % path
+#}}}

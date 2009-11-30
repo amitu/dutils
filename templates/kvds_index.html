@@ -9,7 +9,7 @@
     <h1>Retrive</h1>
     <form method="get" action="/single/">
         Key: <input type=text name="key">
-        <input type="submit" value="Save">
+        <input type="submit" value="Lookup">
     </form>
     <h1>Store</h1>
     <form method="post" action=".">
@@ -17,5 +17,10 @@
         {{ form }}
         </table>
         <input type="submit" value="Save">
+    </form>
+    <h1>Prefix Search</h1>
+    <form method="get" action="/prefix/">
+        Prefix: <input type=text name="prefix">
+        <input type="submit" value="search">
     </form>
 </html>

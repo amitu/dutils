@@ -64,6 +64,7 @@ def month_number_to_name(value, arg="1"):
             "10": "Oct",
             "11": "Nov",
             "12": "Dec",
+            "%m": "MMMMMMMMMMMMMMMMMMMMMMMMMMM",
         }
     }[arg][value]
 # }}} 
