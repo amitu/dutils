@@ -799,6 +799,103 @@ def clean_data(func):
     return decorated
 # }}}
 
+# get address book from google # {{{
+
+import atom
+import gdata.contacts
+import gdata.contacts.service
+
+class GContacts(object):
+    
+    def __init__(self, email, password):
+        self.gd_client = gdata.contacts.service.ContactsService()
+        self.gd_client.email = email
+        self.gd_client.password = password
+        self.gd_client.source = 'Your Application Name'
+        self.gd_client.ProgrammaticLogin()
+
+    def ListAllContacts(self):
+        """Retrieves a list of contacts and displays name and primary email."""
+        feed = self.gd_client.GetContactsFeed()
+        contacts = []
+
+        while feed:
+            for f in feed.entry:
+                for e in f.email:
+                    if f.title.text:
+                        contacts.append({ f.title.text:e.address })
+                    else:
+                        contacts.append({ e.address:e.address })
+            next = feed.GetNextLink()
+            feed = None
+            if next:
+                feed = self.gd_client.GetContactsFeed(next.href)
+        return contacts
+
+def get_google_contacts(request):
+    gservice = GContacts(
+        email = request.GET['email'], 
+        password = request.GET['password']
+    )
+    next = request.GET["next"]
+    try:
+        contacts = gservice.ListAllContacts()
+        request.session["contact_feed"] = contacts
+        return HttpResponseRedirect(next)
+    except gdata.service.BadAuthentication:
+        return HttpResponse('Authentication Error, Login Password mismatch')
+#}}}
+
+# get address book from yahoo # {{{
+def get_yahoo_contacts(request):
+    import time
+    import hashlib
+    import urllib
+    from xml.etree.ElementTree import ElementTree
+    import xml.etree.ElementTree
+    import urllib2
+    from django.utils import simplejson
+
+    appid = settings.YAHOO_APPID
+    secret = settings.YAHOO_SECRET_KEY
+    if request.GET.get('appid'):
+        token = request.GET['token']
+        ts = int(time.time())
+        sig = hashlib.md5("/WSLogin/V1/wspwtoken_login?appid=%s&token=%s&ts=%s%s" % (appid, token, ts, secret)).hexdigest()
+        url = "https://api.login.yahoo.com/WSLogin/V1/wspwtoken_login?appid=%s&token=%s&ts=%s&sig=%s" % (appid, token, ts, sig)
+        u = urllib.urlopen(url)
+        data = u.read()
+        data = data.replace(':',"_")
+        tree = ElementTree()
+        b = xml.etree.ElementTree.fromstring(data)
+        cookie = b.getchildren()[0].find('Cookie').text
+        wssid = b.getchildren()[0].find('WSSID').text
+        headers = {'Cookie': cookie.strip()}
+        url = "http://address.yahooapis.com/v1/searchContacts?format=json&WSSID=%s&appid=%s&token=%s" % (wssid, appid, token)
+        req = urllib2.Request(url, headers=headers)
+        response = urllib2.urlopen(req)
+        addressbook = []
+        data = simplejson.loads(response.read())
+        for contact in data['contacts']:
+            email, name = '',''
+            for cf in contact['fields']:
+                if cf['type'] == 'email':
+                    email = cf.get('data','')
+                if cf['type'] == 'name':
+                    name = "%s %s" % (cf.get('first',''), cf.get('last',''))
+                if cf['type'] == 'yahooid':
+                    email = cf.get('data','') + "@yahoo.com"
+            if email or name:
+                addressbook.append({name:email})
+        return HttpResponse("OK GETTING APID")
+
+    appdata = "foobar"
+    ts = int(time.time())
+    sig = hashlib.md5("/WSLogin/V1/wslogin?appid=%s&appdata=%s&ts=%s%s" % (appid, appdata, ts, secret)).hexdigest()
+    url = "https://api.login.yahoo.com/WSLogin/V1/wslogin?appid=%s&appdata=%s&ts=%s&sig=%s" % (appid, appdata, ts, sig)
+    return HttpResponseRedirect(url)
+
+#}}}
 """
 template helpers
 ----------------
