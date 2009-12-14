@@ -45,9 +45,12 @@ def translate(text, to='hi', src='en'):
         params = urllib.urlencode(
             dict([(k, v.encode('utf-8')) for k, v in params.items()])
         )
-        resp = simplejson.load(
-            urllib.urlopen('%s' % (baseUrl), data = params)
-        )
+        try:
+            resp = simplejson.load(
+                urllib.urlopen('%s' % (baseUrl), data = params)
+            )
+        except ValueError:
+            return text
         if resp['responseData']:
             retText += resp['responseData']['translatedText']
     return retText
