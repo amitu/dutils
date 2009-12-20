@@ -24,7 +24,8 @@ def paginator(context, adjacent_pages=2):
         if n > 0 and n <= context['pages']
     ]
     path = dutils.get_url_with_params(
-        request, context.get("paginator_path_override"), without="page"
+        context["request"], 
+        context.get("paginator_path_override"), without="page"
     )
 
     return {
