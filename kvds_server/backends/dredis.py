@@ -2,7 +2,6 @@ import redis
 from django.core.exceptions import ImproperlyConfigured
 from dutils.kvds_server.backends import Backend
 
-
 class RedisBackend(Backend):
     def __init__(self, params):
         if "port" not in params: 
@@ -18,15 +17,16 @@ class RedisBackend(Backend):
         return self
 
     def _get(self, key):
-        key = key.encode("utf-8")
         return self.ty.get(key)
 
     def _set(self, key, value):
-        key = key.encode("utf-8")
         self.ty.set(key, value)
     
     def prefix(self, prefix):
         return self.ty.keys("%s*" % self.get_full_key(prefix))
+    
+    def __contains__(self, key):
+        return self.ty.exists(self.get_full_key(key))
 
 def load(params):
     return RedisBackend(params)
