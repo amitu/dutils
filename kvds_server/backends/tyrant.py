@@ -26,5 +26,8 @@ class TyrantBackend(Backend):
     def prefix(self, prefix):
         return self.ty.prefix_keys(self.get_full_key(prefix))
 
+    def __contains__(self, key):
+        return self.get_full_key(key) in self.ty
+
 def load(params):
     return TyrantBackend(params)

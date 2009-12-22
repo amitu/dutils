@@ -62,6 +62,9 @@ class Backend(object):
 
     def close(self): pass
 
+    def __contains__(self, item):
+        raise NotImplementedError
+
 def connect(params):
     return Backend(params)
 

@@ -28,7 +28,7 @@ from django.shortcuts import render_to_response
 from django.utils.hashcompat import md5_constructor
 from django.conf import settings
 
-import pytyrant, os, random, time
+import pytyrant, os
 
 from dutils import utils
 from dutils.utils import JSONResponse
@@ -41,13 +41,10 @@ ty = sty = None
 
 backend = ks_utils.load_backend()
 
-pid = os.getpid()
-
 # single # {{{
 def single(request):
-    backend.connect()
     return HttpResponse(
-        backend.single(request.GET["key"]), mimetype="text/plain"
+        backend.connect().single(request.GET["key"]), mimetype="text/plain"
     )
 # }}}
 
@@ -90,19 +87,16 @@ def kvds(request):
 
 # start_session # {{{
 def start_session(request):
-    reopen_connections()
+    backend.connect()
     # create a new unique sessionid, store an empty session in the same
     while True:
-        sessionid = md5_constructor(
-            "%s%s%s" % (random.random(), pid, time.time())
-        ).hexdigest()
-        if "session_%s" % sessionid in sty:
+        sessionid = utils.uuid()
+        if "session_%s" % sessionid in backend:
             print "SESSIONID CLASH", sessionid
             continue
         else: break
-    sty["session_%s" % sessionid] = simplejson.dumps({})
-    # TODO: set expiry
-    return HttpResponse(simplejson.dumps(dict(sessionid=sessionid)))
+    backend.set("session_%s" % sessionid, simplejson.dumps({}))
+    return JSONResponse(dict(sessionid=sessionid))
 # }}}
 
 # session # {{{
