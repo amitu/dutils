@@ -940,3 +940,12 @@ def get_url_with_params(request, path_override=None, without=None):
     else:
         return "%s?" % path
 #}}}
+
+# mail_exception # {{{
+def mail_exception(tag="django"):
+    from django.core import mail
+    mail.mail_admins(
+        "exception in %s" % tag, formatExceptionInfo(12), 
+    )
+# }}}
+

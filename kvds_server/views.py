@@ -44,9 +44,9 @@ pid = os.getpid()
 
 # single # {{{
 def single(request):
-    reopen_connections()
+    backend.connect()
     return HttpResponse(
-        ty[request.GET["key"].encode("utf-8")], mimetype="text/plain"
+        backend.single(request.GET["key"]), mimetype="text/plain"
     )
 # }}}
 
@@ -59,7 +59,9 @@ def kvds(request):
         for key in request.REQUEST.getlist("key"):
             key = key.encode('utf-8')
             if not key in ty: continue
-            d[key] = ty[key]
+            try:
+                d[key] = ty[key]
+            except IndexError: pass
     if "kv" in request.REQUEST:
         for kv in request.REQUEST.getlist("kv"):
             if not kv: continue

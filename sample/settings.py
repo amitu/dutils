@@ -1,4 +1,4 @@
-# Django settings for dutils_test project.
+# Django settings for sample project.
 from path import path
 import set_paths
 
@@ -67,7 +67,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
 )
 
-ROOT_URLCONF = 'dutils_test.urls'
+ROOT_URLCONF = 'sample.urls'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".

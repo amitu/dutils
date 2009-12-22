@@ -11,6 +11,7 @@ def set_settings(name=""):
 def set_paths(f):
     p = path.path(f)
     sys.path.append(str(p.parent.joinpath("../").abspath()))
+    sys.path.append(str(p.parent.joinpath("../..").abspath()))
     sys.path.append(str(p.parent.joinpath("libs/").abspath()))
     set_settings()
 
