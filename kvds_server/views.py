@@ -40,16 +40,6 @@ ty = sty = None
 
 backend = ks_utils.load_backend()
 
-# reopen_connections # {{{
-def reopen_connections():
-    TYRANT_HOST = getattr(settings, "TYRANT_HOST", "localhost")
-    TYRANT_PORT = getattr(settings, "TYRANT_PORT", 1978)
-    global ty, sty
-    print TYRANT_HOST, TYRANT_PORT
-    ty = pytyrant.PyTyrant.open(TYRANT_HOST, TYRANT_PORT)
-    sty = pytyrant.PyTyrant.open(TYRANT_HOST, TYRANT_PORT)
-# }}}
-
 pid = os.getpid()
 
 # single # {{{
@@ -157,7 +147,7 @@ def session(request):
 # prefix # {{{
 def prefix(request):
     print "prefix"
-    reopen_connections()
+    backend.connect()
     prefix = request.REQUEST['prefix']
     prefix_keys = []
     prefixed_keys = ty.prefix_keys(str(prefix))

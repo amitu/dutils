@@ -33,8 +33,8 @@ class Backend(object):
 
     def get_full_key(self, key):
         if not "bucket" in self.params:
-            return key
-        return "%s.%s" % (self.params["bucket"], key)
+            return key.encode("utf-8")
+        return ("%s.%s" % (self.params["bucket"], key)).encode("utf-8")
 
     def _get(self, key):
         raise NotImplementedError

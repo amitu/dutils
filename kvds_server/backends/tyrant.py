@@ -18,11 +18,9 @@ class TyrantBackend(Backend):
         return self
 
     def _get(self, key):
-        key = key.encode("utf-8")
         return self.ty[key]
 
     def _set(self, key, value):
-        key = key.encode("utf-8")
         self.ty[key] = value
 
 def load(params):
