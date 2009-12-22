@@ -815,13 +815,11 @@ def clean_data(func):
 
 # get address book from google # {{{
 
-import atom
-import gdata.contacts
-import gdata.contacts.service
 
 class GContacts(object):
     
     def __init__(self, email, password):
+        import gdata.contacts
         self.gd_client = gdata.contacts.service.ContactsService()
         self.gd_client.email = email
         self.gd_client.password = password
@@ -847,6 +845,7 @@ class GContacts(object):
         return contacts
 
 def get_google_contacts(request):
+    import gdata.contacts.service
     gservice = GContacts(
         email = request.GET['email'], 
         password = request.GET['password']
