@@ -23,5 +23,8 @@ class TyrantBackend(Backend):
     def _set(self, key, value):
         self.ty[key] = value
 
+    def prefix(self, prefix):
+        return self.ty.prefix_keys(self.get_full_key(prefix))
+
 def load(params):
     return TyrantBackend(params)

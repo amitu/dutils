@@ -57,7 +57,7 @@ class Backend(object):
     def kvds(self, *to_get, **to_set):
         pass
 
-    def prefix(self, *prefixes):
+    def prefix(self, prefix):
         raise NotImplementedError
 
     def close(self): pass

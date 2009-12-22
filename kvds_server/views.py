@@ -31,6 +31,7 @@ from django.conf import settings
 import pytyrant, os, random, time
 
 from dutils import utils
+from dutils.utils import JSONResponse
 
 from dutils.kvds_server.forms import StoreValue
 from dutils.kvds_server import utils as ks_utils
@@ -148,12 +149,7 @@ def session(request):
 
 # prefix # {{{
 def prefix(request):
-    print "prefix"
-    backend.connect()
-    prefix = request.REQUEST['prefix']
-    prefix_keys = []
-    prefixed_keys = ty.prefix_keys(str(prefix))
-    return HttpResponse(simplejson.dumps(prefixed_keys))
+    return JSONResponse(backend.connect().prefix(request.REQUEST['prefix']))
 # }}} 
 
 # index # {{{ 
