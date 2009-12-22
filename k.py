@@ -5,7 +5,9 @@ class attrdict(dict):
 
 if __name__ == "__main__":
     import set_paths
+    from path import path
     from kvds_server import *
+    APP_DIR = path(".")
     #DEBUG = True
     #TEMPLATE_DIRS = (".", )
     INSTALLED_APPS = ('dutils',)

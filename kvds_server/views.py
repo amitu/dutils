@@ -27,16 +27,18 @@ from django.template import RequestContext
 from django.shortcuts import render_to_response
 from django.utils.hashcompat import md5_constructor
 from django.conf import settings
-from django import forms
-from django.conf.urls.defaults import *
 
 import pytyrant, os, random, time
 
 from dutils import utils
 
-ty = sty = None
+from dutils.kvds_server.forms import StoreValue
+from dutils.kvds_server import utils as ks_utils
 
+ty = sty = None
 # }}}
+
+backend = ks_utils.load_backend()
 
 # reopen_connections # {{{
 def reopen_connections():
@@ -162,44 +164,23 @@ def prefix(request):
     return HttpResponse(simplejson.dumps(prefixed_keys))
 # }}} 
 
-# StoreValue # {{{
-class StoreValue(forms.Form):
-    key = forms.CharField(max_length=100)
-    value = forms.CharField(widget=forms.Textarea)
-
-    def save(self):
-        d = self.cleaned_data.get
-        reopen_connections()
-        ty[str(d("key"))] = str(d("value").encode("utf-8"))
-        return "/?key=%s" % d("key")
-# }}}
-
+# index # {{{ 
 def index(request):
-    reopen_connections()
+    backend.connect()
     if request.method == "POST":
         form = StoreValue(request.POST)
         if form.is_valid():
-            return HttpResponseRedirect(form.save())
+            return HttpResponseRedirect(form.save(backend))
     else:
         initials = {}
         if "key" in request.GET:
             initials = { 
                 "key": request.GET["key"],
-                "value": ty[str(request.GET["key"])]
+                "value": backend.get(request.GET["key"])
             }
         form = StoreValue(initial=initials)
     return render_to_response(
         "kvds_index.html", { "form": form }, 
         context_instance=RequestContext(request)
     )
-
-# urls # {{{
-urlpatterns = patterns('',
-    (r'^start-session/$', start_session),
-    (r'^kvds/$', kvds),
-    (r'^single/$', single),
-    (r'^session/$', session),
-    (r'^prefix/$', prefix),
-    (r'^$', index),
-)
-# }}}
+# }}} 
