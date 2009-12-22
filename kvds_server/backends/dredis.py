@@ -24,6 +24,9 @@ class RedisBackend(Backend):
     def _set(self, key, value):
         key = key.encode("utf-8")
         self.ty.set(key, value)
+    
+    def prefix(self, prefix):
+        return self.ty.keys("%s*" % self.get_full_key(prefix))
 
 def load(params):
     return RedisBackend(params)
