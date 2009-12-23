@@ -1,4 +1,4 @@
-"""
+""" # Documentation # {{{ 
 Backend Base Class
 ==================
 
@@ -20,7 +20,7 @@ certain scenarious, the algorithm used by the default parameters and
 multiple cals to .get()/.set() may be inefficeient and it may be desirable
 to overwrite one or more of the .kvds()/.single()/.session()/.prefix()
 methods.
-"""
+""" # }}} 
 
 from django.core.exceptions import ImproperlyConfigured
 from django.utils import simplejson
@@ -47,11 +47,18 @@ class Backend(object):
         raise NotImplementedError
 
     def set(self, key, value):
-        self._set(self.get_full_key(key), value)
+        self._set(self.get_full_key(key), value.encode("utf-8"))
+
+    def _remove(self, key):
+        raise NotImplementedError
+
+    def remove(self, key):
+        self._remove(self.get_full_key(key))
 
     def single(self, key):
         return self.get(key)
 
+    # session # {{{
     def session(self, sessionid, allow_expired=True, **to_set):
         sessionkey = "session_%s" % sessionid
         d = self.get(sessionkey)
@@ -82,9 +89,30 @@ class Backend(object):
             if perms:
                 session_data["user_perms"] = perms
         return session_data
+    # }}}
 
-    def kvds(self, *to_get, **to_set):
-        pass
+    def kvds(self, sessionid=None, *to_get, **to_set):
+        d = {}
+        for key in to_get:
+            try:
+                d[key] = self.get(key)
+            except IndexError: pass
+        if to_set:
+            for key, value in to_set.items():
+                # if value is empty, delete the key from datastore
+                if value:
+                    self.set(key, value)
+                else:
+                    try:
+                        self.remove(key)
+                    except KeyError: pass
+        if sessionid:
+            sessionkey = str("session_%s" % sessionid)
+            data = self.get(sessionkey)
+            session_data = simplejson.loads(data)
+            # TODO load user
+            d[":session:"] = session_data
+        return d
 
     def prefix(self, prefix):
         raise NotImplementedError

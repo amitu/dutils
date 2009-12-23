@@ -23,6 +23,9 @@ class TyrantBackend(Backend):
     def _set(self, key, value):
         self.ty[key] = value
 
+    def _remove(self, key):
+        del self.ty[key]
+
     def prefix(self, prefix):
         return self.ty.prefix_keys(self.get_full_key(prefix))
 

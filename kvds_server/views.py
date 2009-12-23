@@ -46,38 +46,17 @@ def single(request):
 
 # kvds # {{{
 def kvds(request):
-    backend.connect()
-    d = {}
-    if "key" in request.REQUEST:
-        for key in request.REQUEST.getlist("key"):
-            key = key.encode('utf-8')
-            if not key in ty: continue
-            try:
-                d[key] = ty[key]
-            except IndexError: pass
-    if "kv" in request.REQUEST:
-        for kv in request.REQUEST.getlist("kv"):
-            if not kv: continue
-            key, value = kv.split(":", 1)
-            key, value = key.encode('utf-8'), value.encode('utf-8')
-            # if value is empty, delete the key from datastore
-            if value:
-                ty[key] = value
-            else:
-                if key in ty:
-                    del ty[key]
-            print key, [ord(c) for c in str(value)]
-    if "sessionid" in request.REQUEST:
-        sessionid = request.REQUEST["sessionid"]
-        sessionkey = str("session_%s" % sessionid)
-        data = sty[sessionkey]
-        session_data = simplejson.loads(data)
-        # TODO load user
-        d[":session:"] = session_data
-    print "+++++++++++++"
-    for v in d.values(): 
-        print [ord(c) for c in v]
-    return HttpResponse(simplejson.dumps(d), mimetype="text/plain")
+    to_set = {}
+    for kv in request.REQUEST.getlist("kv"):
+        if not kv: continue
+        key, value = kv.split(":", 1)
+        to_set[str(key)] = value
+    return JSONResponse(
+        backend.connect().kvds(
+            request.REQUEST.get("sessionid"),
+            *request.REQUEST.getlist("key"), **to_set
+        )
+    )
 # }}}
 
 # start_session # {{{
