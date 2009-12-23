@@ -23,6 +23,7 @@ methods.
 """
 
 from django.core.exceptions import ImproperlyConfigured
+from django.utils import simplejson
 
 class Backend(object):
     def __init__(self, params):
@@ -51,8 +52,36 @@ class Backend(object):
     def single(self, key):
         return self.get(key)
 
-    def session(self, sessionid):
-        pass
+    def session(self, sessionid, allow_expired=True, **to_set):
+        sessionkey = "session_%s" % sessionid
+        d = self.get(sessionkey)
+        session_data = simplejson.loads(d)
+        if to_set:
+            for key, value in to_set.items():
+                # if value is empty, delete the key from session
+                if value:
+                    session_data[key] = value
+                else:
+                    if key in session_data:
+                        del session_data[key]
+            self.set(sessionkey, simplejson.dumps(session_data))
+        # TODO: check if expiry is set etc.
+        # load user data
+        if "user_id" in session_data:
+            user_data = simplejson.loads(
+                self.get("user_%s" % session_data["user_id"])
+            )
+            session_data["user"] = user_data
+            # del session_data["user"]["password"] # TODO required?
+            perms = user_data.get("perms", "").split(",")
+            for group in user_data.get("groups", "").split(","):
+                if not group: continue
+                key = "group_%s_perms" % group
+                perms.extend(self.get(key).split(","))
+            perms = list(set(perms))
+            if perms:
+                session_data["user_perms"] = perms
+        return session_data
 
     def kvds(self, *to_get, **to_set):
         pass

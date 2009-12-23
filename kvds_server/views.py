@@ -28,15 +28,11 @@ from django.shortcuts import render_to_response
 from django.utils.hashcompat import md5_constructor
 from django.conf import settings
 
-import pytyrant, os
-
 from dutils import utils
 from dutils.utils import JSONResponse
 
 from dutils.kvds_server.forms import StoreValue
 from dutils.kvds_server import utils as ks_utils
-
-ty = sty = None
 # }}}
 
 backend = ks_utils.load_backend()
@@ -50,8 +46,7 @@ def single(request):
 
 # kvds # {{{
 def kvds(request):
-    reopen_connections()
-    utils.logger.info('kvds called')
+    backend.connect()
     d = {}
     if "key" in request.REQUEST:
         for key in request.REQUEST.getlist("key"):
@@ -101,44 +96,20 @@ def start_session(request):
 
 # session # {{{
 def session(request):
-    reopen_connections()
     print request.path, request.GET, request.POST
-    sessionid = request.REQUEST["sessionid"]
-    sessionkey = str("session_%s" % sessionid)
-    allow_expired = { "true": True }.get(
-        request.REQUEST.get("allow_expired"), False
-    )
-    d = sty[sessionkey]
-    session_data = simplejson.loads(d)
-    if "kv" in request.REQUEST:
-        for kv in request.REQUEST.getlist("kv"):
-            if not kv: continue
-            key, value = kv.split(":", 1)
-            # if value is empty, delete the key from session
-            if value:
-                session_data[key] = value
-            else:
-                if key in session_data:
-                    del session_data[key]
-        sty[sessionkey] = simplejson.dumps(session_data)
-    # TODO: check if expiry is set etc  
-    # load user data
-    if "user_id" in session_data:
-        user_data = simplejson.loads(
-            ty[str("user_%s" % session_data["user_id"])]
+    to_set = {}
+    for kv in request.REQUEST.getlist("kv"):
+        if not kv: continue
+        key, value = kv.split(":", 1)
+        to_set[str(key)] = value
+    return JSONResponse(
+        backend.connect().session(
+            request.REQUEST["sessionid"],
+            allow_expired = { "true": True }.get(
+                request.REQUEST.get("allow_expired"), False
+            ), **to_set
         )
-        session_data["user"] = user_data
-        # del session_data["user"]["password"] # TODO required?
-        perms = user_data.get("perms", "").split(",")
-        for group in user_data.get("groups", "").split(","):
-            if not group: continue
-            key = str("group_%s_perms" % group)
-            perms.extend(ty[key].split(","))
-        perms = list(set(perms))
-        session_data["user_perms"] = perms
-    else:
-        session_data["user_perms"] = []
-    return HttpResponse(simplejson.dumps(session_data))
+    )
 # }}}
 
 # prefix # {{{
