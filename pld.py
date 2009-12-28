@@ -7,10 +7,10 @@ from django.http import HttpResponse, Http404
 def get_response_or_urlpatterns(get_response):
     old_get_reponse = BaseHandler.get_response
     def decorated(self, request):
-        print settings.APP_DIR
         try:
             return get_response(request)
         except Http404:
+            print request.path
             return old_get_reponse(self, request)
     return decorated
 
@@ -19,7 +19,9 @@ def handle_folder(request):
         mod = __import__(request.path.split("/")[1]) # FIXME
     except (ImportError, ValueError), e:
         raise Http404(e)
-    return mod.handle(request)
+    resp = mod.handle(request)
+    if isinstance(resp, basestring): resp = HttpResponse(resp)
+    return resp
 
 def handle(get_response=handle_folder, **params):
     BaseHandler.get_response = get_response_or_urlpatterns(get_response)
