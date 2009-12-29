@@ -56,7 +56,13 @@ def SELF_CLOSING_TAG(m):
 def RAW_TEXT(m):
     return m.group(1).rstrip()
 
+@syntax('^!!!$')
+def BANG_BANG_BANG(m):
+    return '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">'
+
+
 LINE_METHODS = [
+        BANG_BANG_BANG,
         RAW_HTML,
         TEXT,
         OUTER_CLOSING_TAG,
@@ -83,8 +89,6 @@ def html_block_tag(line):
 
 def convert_line(line):
     line = line.strip()
-    if line == "!!!":
-        return '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">'
     for method in LINE_METHODS:
         m = re.match(method.regex, line)
         if m:
