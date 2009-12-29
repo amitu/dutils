@@ -56,6 +56,7 @@ SECRET_KEY = 'fslui@0(x99e7dr#k#a8y5gkx%(+hqjrrmb*8=-u(v0du#=3o#'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
+    'dutils.shpaml_loader.load_template_source',
     'django.template.loaders.filesystem.load_template_source',
     'django.template.loaders.app_directories.load_template_source',
 #     'django.template.loaders.eggs.load_template_source',
@@ -74,6 +75,8 @@ TEMPLATE_DIRS = (
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
 )
+
+SHMAPL_TEMPLATE_DIRS = ( "/Users/amitupadhyay/projects/projs/dutils/shmapl_templates/", )
 TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.auth",
     "django.core.context_processors.debug",

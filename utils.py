@@ -909,6 +909,7 @@ def get_yahoo_contacts(request):
     return HttpResponseRedirect(url)
 
 #}}}
+
 """
 template helpers
 ----------------
