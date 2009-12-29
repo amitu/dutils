@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 import re
 
 def convert_text(in_body):
@@ -210,3 +210,13 @@ def pop_whitespace(lines):
     while lines and lines[-1] == '':
         whitespace_lines.append(lines.pop())
     return whitespace_lines
+
+if __name__ == "__main__":
+    # if file name is given convert file, else convert stdin
+    import sys
+    if len(sys.argv) == 2:
+        shpaml_text = file(sys.argv[1]).read()
+    else:
+        shpaml_text = sys.stdin.read()
+    print convert_text(shpaml_text)
+
