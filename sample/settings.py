@@ -76,7 +76,7 @@ TEMPLATE_DIRS = (
     # Don't forget to use absolute paths, not relative paths.
 )
 
-SHMAPL_TEMPLATE_DIRS = ( "/Users/amitupadhyay/projects/projs/dutils/shmapl_templates/", )
+SHPAML_TEMPLATE_DIRS = ( "/Users/amitupadhyay/projects/projs/dutils/shpaml_templates/", )
 TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.auth",
     "django.core.context_processors.debug",

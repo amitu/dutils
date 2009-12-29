@@ -10,7 +10,7 @@ from dutils.shpaml import convert_text
 # get_template_sources # {{{
 def get_template_sources(template_name, template_dirs=None):
     if not template_dirs:
-        template_dirs = getattr(settings, "SHMAPL_TEMPLATE_DIRS", [])
+        template_dirs = getattr(settings, "SHPAML_TEMPLATE_DIRS", [])
     print template_dirs
     for template_dir in template_dirs:
         try:
