@@ -4,3 +4,4 @@
 *.log
 db.sqlite
 local_settings.py
+.DS_Store
