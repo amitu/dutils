@@ -10,7 +10,6 @@ def get_response_or_urlpatterns(get_response):
         try:
             return get_response(request)
         except Http404:
-            print request.path
             return old_get_reponse(self, request)
     return decorated
 

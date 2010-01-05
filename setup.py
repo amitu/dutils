@@ -3,7 +3,7 @@ use_setuptools()
 from setuptools import setup, find_packages
 
 setup(
-    name="DUtils",
+    name="dutils",
     version="0.1dev",
     description="Useful django utilities",
     long_description="""This is a boxy package...""",
