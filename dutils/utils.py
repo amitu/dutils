@@ -17,6 +17,7 @@ import time, random, re, os, sys, traceback
 from hashlib import md5
 import urllib2, urllib, threading, cgi
 from PIL import Image
+from functools import wraps
 
 import logging
 import cStringIO
@@ -950,3 +951,36 @@ def mail_exception(tag="django"):
     )
 # }}}
 
+# templated decorator # {{{
+def templated(template, mimetype="text/html"):
+    """
+    templated decorator
+    ===================
+
+    typical usage:
+
+    @templated("my-template.html")
+    def my_view(request, param):
+        return { "param": param }
+
+    the view should return a dictionary, or nothing, and templated decorator
+    will convert it to django context, load the template, pass the request
+    context, and return HttpResponse.
+
+    view can also returh a HttpResponse subclass and templated will let it pass
+    through without any processing.
+    """
+    from django.shortcuts import render_to_response
+    from django.generic.views.simple import direct_to_template
+    def decorator(view):
+        @wraps(view)
+        def wrapped(request, *args, **kwargs):
+            res = view(request, *args, **kwargs)
+            if res is None:
+                res = {}
+            elif isinstance(res, HttpResponse):
+                return res
+            return direct_to_template(request, template, res, mimetype)
+        return wrapped
+    return decorator
+# }}}
