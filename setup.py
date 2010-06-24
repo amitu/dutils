@@ -9,9 +9,9 @@ from setuptools import setup, find_packages
 
 setup(
     name="dutils",
-    version="0.0.1",
+    version="0.0.2",
     description="Useful django utilities",
-    long_description="""This is a boxy package...""",
+    long_description="""Reusable django utilities.""",
     author="Amit Upadhyay",
     author_email="code@amitu.com",
     url="http://github.com/amitu/dutils",

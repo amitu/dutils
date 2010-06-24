@@ -1034,6 +1034,18 @@ class LoginForm(RequestForm):
     """
     Base class for authenticating users. Extend this to get a form that accepts
     username/password logins.
+
+    Example usage:
+    --------------
+        url(r'^login/$',
+           "dutils.utils.form_handler",
+           {
+               'template': 'registration/login.html',
+               "form_cls": "dutils.utils.LoginForm",
+               "next": "/",
+           },
+           name='auth_login'
+        ),
     """
     username = forms.CharField(label=_("Username"), max_length=30)
     password = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
