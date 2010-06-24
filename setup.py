@@ -13,7 +13,10 @@ setup(
     name="dutils",
     version=dutils.VERSION,
     description="Useful django utilities",
-    long_description="""Reusable django utilities.""",
+    long_description="""Reusable django utilities.
+
+    Documentation: http://packages.python.org/dutils/
+    """,
     author="Amit Upadhyay",
     author_email="code@amitu.com",
     url="http://github.com/amitu/dutils",
