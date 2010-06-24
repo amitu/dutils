@@ -40,13 +40,9 @@ runserver's auto reload feature, any changed made in hello.py will be reflected
 without requiring a restart by developer.
 
 Each handler module must define a method named `handle`. This method will take
-one parameter, `request`. Request is an instance of `HttpRequest
-<http://docs.djangoproject.com/en/dev/ref/request-response/#httprequest-objects>`_
-class.
+one parameter, `request`. Request is an instance of HttpRequest_ class.
 
-`handle` must return either a string or a subclass of `HttpResponse
-<http://docs.djangoproject.com/en/dev/ref/request-response/#httpresponse-objects>`_
-object.
+`handle` must return either a string or a subclass of HttpResponse_ object.
 
 An example of a `handle` that redirects user to a different page::
 

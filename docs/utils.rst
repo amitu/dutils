@@ -162,5 +162,23 @@ JSResponse
 log_user_in
 ===========
 
+Frequently one has to log a user in. Django requires you to know the password
+of the user, in order to user `authenticate
+<http://docs.djangoproject.com/en/dev/topics/auth/#django.contrib.auth.authenticate>`_
+function. This can get inconvenient when you do not have, or know the password.
+
+|utils| comes with a utility method `log_user_in` to help in such a situation.
+
+.. function:: log_user_in(user, request)
+
+    Log the given user in the request's session.
+
+    :param user: user object, instance of User_
+    :param request: request object, instance of HttpRequest_
+    :rtype: None
+
+This function is typically useful for features like logging a user in after
+they have clicked on email confirmation link, or for imporsonate a user etc.
+
 object_list
 ===========
