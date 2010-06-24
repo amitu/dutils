@@ -1,11 +1,15 @@
-# project less django module
+# project less django module 
+# imports # {{{ 
 from django.core.handlers.base import BaseHandler
 from django.conf.urls.defaults import *
 from django.conf import settings
 from django.core.management import ManagementUtility
 from django.http import HttpResponse, Http404
-import path
 
+import path, sys
+# }}} 
+
+# get_response_or_urlpatterns # {{{ 
 def get_response_or_urlpatterns(get_response):
     old_get_reponse = BaseHandler.get_response
     def decorated(self, request):
@@ -14,7 +18,9 @@ def get_response_or_urlpatterns(get_response):
         except Http404:
             return old_get_reponse(self, request)
     return decorated
+# }}} 
 
+# handle_folder # {{{ 
 def handle_folder(request):
     try:
         mod = __import__(request.path.split("/")[1]) # FIXME
@@ -23,26 +29,34 @@ def handle_folder(request):
     resp = mod.handle(request)
     if isinstance(resp, basestring): resp = HttpResponse(resp)
     return resp
+# }}} 
 
+# handle # {{{ 
 def handle(get_response=handle_folder, **params):
     BaseHandler.get_response = get_response_or_urlpatterns(get_response)
     settings.configure(**params)
     ManagementUtility().execute()
+# }}} 
 
+# urlpatterns # {{{ 
 urlpatterns = patterns('',
-    # serving static files, only for development, use nginx for prod # {{{ 
     (
         r'^static/(?P<path>.*)$', 'django.views.static.serve',
         {'document_root': path.path("./static")}
     ),
-    # }}} 
 )
+# }}} 
+
+# get_response # {{{ 
 def get_params():
     "get debug, ip, port, from command line"
     return { 
         "DEBUG": True, "INSTALLED_APPS": ["dutils"], "APP_DIR": path.path("."),
         "ROOT_URLCONF": "dutils.pld", "TEMPLATE_DIRS": ["templates",],
     }
+# }}} 
 
 if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        sys.argv.append("rdebug")
     handle(**get_params())
