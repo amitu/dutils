@@ -767,7 +767,7 @@ def form_handler(
         if require_login == "404":
             raise Http404("login required")
         return HttpResponseRedirect(
-            "%s?next=%s" % (login_url, request.path)
+            "%s?next=%s" % (login_url, request.path) # TODO: use right path
         )
     if block_get and request.method != "POST":
         raise Http404("only post allowed")
@@ -778,16 +778,21 @@ def form_handler(
         form_cls = getattr(__import__(mod_name, {}, {}, ['']), form_name)
     if next: assert template, "template required when next provided"
     if template and request.method == "GET":
+        # TODO: all "extra" positional args and kwargs should be passed to form
         return render_to_response(
-            template, {"form": form_cls(request)}, 
+            template, {"form": form_cls(request)}, # TODO: allow defaults from URL?
             context_instance=RequestContext(request)
         )
     form = form_cls(request, request.REQUEST)
     if form.is_valid():
         saved = form.save()
+        if request.REQUEST.get("json") == "true":
+            return JSONResponse({ 'success': True, 'response': saved })
         if next: return HttpResponseRedirect(next)
         if template: return HttpResponseRedirect(saved)
         return JSONResponse({ 'success': True, 'response': saved })
+    if request.REQUEST.get("json") == "true":
+        return JSONResponse({ 'success': False, 'errors': form.errors })
     if template:
         return render_to_response(
             template, {"form": form}, 
