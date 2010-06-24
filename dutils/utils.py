@@ -5,26 +5,31 @@ from django import forms
 from django.core.files.base import ContentFile
 from django.utils.encoding import smart_str, smart_unicode
 from django.http import HttpResponseServerError, HttpResponseRedirect
-from django.template import RequestContext
+from django.template import loader, RequestContext
 from django.utils.translation import force_unicode
 from django.http import HttpResponse, Http404
 from django.core.urlresolvers import get_mod_func
 from django.template.defaultfilters import filesizeformat
+from django.core.paginator import Paginator, InvalidPage
 from django.utils.functional import Promise
 from django.db.models.query import QuerySet
+from django.contrib.auth import authenticate
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
 import time, random, re, os, sys, traceback
 from hashlib import md5
-import urllib2, urllib, threading, cgi
+import urllib2, urllib, threading, cgi, itertools
 from PIL import Image
 from functools import wraps
+from datetime import datetime
 
 import logging
 import cStringIO
 try:
     import solr
 except ImportError: 
-    print "solr lib required for some functions"
+    pass
 # }}} 
 
 # threaded_task # {{{ 
@@ -986,3 +991,222 @@ def templated(template, mimetype="text/html"):
         return wrapped
     return decorator
 # }}}
+
+# assert_or_404 # {{{ 
+def assert_or_404(condition, message="assertion failed"):
+    if not condition:
+        raise Http404(message)
+# }}} 
+
+# debug_call # {{{ 
+def debug_call(func):
+    if not settings.DEBUG: return func
+    def wrapper(*args, **kw):
+        logger.debug("%s called with %s, %s" % (func.__name__, args, kw))
+        start = time.time()
+        ret = func(*args, **kw)
+        logger.debug(
+            "%s returned %s in %s secs" % (
+                func.__name__, ret, time.time() - start
+            )
+        )
+        return ret
+    return wrapper
+# }}} 
+
+# QuerySetManager # {{{
+class QuerySetManager(models.Manager):
+    def get_query_set(self):
+        return self.model.QuerySet(self.model)
+
+    def __getattr__(self, attr, *args):
+        return getattr(self.get_query_set(), attr, *args)
+# }}}
+
+# dutils.auth # {{{
+# LoginForm # {{{
+class LoginForm(RequestForm):
+    """
+    Base class for authenticating users. Extend this to get a form that accepts
+    username/password logins.
+    """
+    username = forms.CharField(label=_("Username"), max_length=30)
+    password = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
+
+    def clean_password(self):
+        username = self.cleaned_data.get('username')
+        password = self.cleaned_data.get('password')
+
+        if username and password:
+            self.user_cache = authenticate(
+                username=username, password=password
+            )
+            if self.user_cache is None:
+                raise forms.ValidationError(_("Please enter a correct username and password. Note that both fields are case-sensitive."))
+
+        return password
+
+    def get_user_id(self):
+        if self.user_cache:
+            return self.user_cache.id
+        return None
+
+    def get_user(self):
+        return self.user_cache
+
+    def save(self):
+        log_user_in(self.user_cache, self.request)
+        d = self.user_cache.__dict__
+        del d["backend"]
+        del d["password"]
+        d["profile"] = self.user_cache.get_profile().__dict__
+        del d["_profile_cache"]
+        del d["profile"]["_user_cache"]
+        del d["profile"]["phone_confirmation_code"]
+        del d["profile"]["email_confirmation_code"]
+        del d["profile"]["facebook_access_token"]
+        d["sessionid"] = self.request.session.session_key
+        return d
+# }}}
+# }}}
+
+# get_fb_access_token_from_request # {{{
+def get_fb_access_token_from_request(request, redirect_uri):
+    args = dict(client_id=settings.FB_API_KEY, redirect_uri=redirect_uri)
+    assert "code" in request.REQUEST
+    args["client_secret"] = settings.FB_API_SECRET
+    args["code"] = request.REQUEST["code"]
+    response = urllib.urlopen(
+        "https://graph.facebook.com/oauth/access_token?" +
+        urllib.urlencode(args)).read()
+    response_data = cgi.parse_qs(response)
+    access_token = response_data["access_token"][-1]
+    return access_token
+# }}}
+
+# JSResponse # {{{ 
+class JSResponse(HttpResponse):
+    def __init__(self, data):
+        HttpResponse.__init__(
+            self, content="""
+<html>
+    <head>
+        <script type="text/javascript">%s</script>
+    </head>
+</html>
+            """ % data, mimetype="text/html",
+        ) 
+# }}} 
+
+# log_user_in # {{{ 
+def log_user_in(user, request):
+    request.session['_auth_user_backend'] = (
+        'django.contrib.auth.backends.ModelBackend'
+    )
+    request.session['_auth_user_id'] = user.id
+# }}} 
+
+# object_list # {{{ 
+def object_list(request, queryset, paginate_by=None, page=None,
+    allow_empty=True, template_name=None, template_loader=loader,
+    extra_context=None, context_processors=None, template_object_name='object',
+    mimetype=None, renderer=None
+):
+    """
+    Generic list of objects.
+
+    Templates: ``<app_label>/<model_name>_list.html``
+    Context:
+        object_list
+            list of objects
+        is_paginated
+            are the results paginated?
+        results_per_page
+            number of objects per page (if paginated)
+        has_next
+            is there a next page?
+        has_previous
+            is there a prev page?
+        page
+            the current page
+        next
+            the next page
+        previous
+            the previous page
+        pages
+            number of pages, total
+        hits
+            number of objects, total
+        last_on_page
+            the result number of the last of object in the
+            object_list (1-indexed)
+        first_on_page
+            the result number of the first object in the
+            object_list (1-indexed)
+        page_range:
+            A list of the page numbers (1-indexed).
+        renderer: 
+            A callable that will be used to render the data instead of django.
+    """
+    if extra_context is None: extra_context = {}
+    queryset = queryset._clone()
+    if paginate_by:
+        paginator = Paginator(queryset, paginate_by, allow_empty_first_page=allow_empty)
+        if not page:
+            page = request.GET.get('page', 1)
+        try:
+            page_number = int(page)
+        except ValueError:
+            if page == 'last':
+                page_number = paginator.num_pages
+            else:
+                # Page is not 'last', nor can it be converted to an int.
+                raise Http404
+        try:
+            page_obj = paginator.page(page_number)
+        except InvalidPage:
+            raise Http404
+        c = RequestContext(request, {
+            '%s_list' % template_object_name: page_obj.object_list,
+            'paginator': paginator,
+            'page_obj': page_obj,
+
+            # Legacy template context stuff. New templates should use page_obj
+            # to access this instead.
+            'is_paginated': page_obj.has_other_pages(),
+            'results_per_page': paginator.per_page,
+            'has_next': page_obj.has_next(),
+            'has_previous': page_obj.has_previous(),
+            'page': page_obj.number,
+            'next': page_obj.next_page_number(),
+            'previous': page_obj.previous_page_number(),
+            'first_on_page': page_obj.start_index(),
+            'last_on_page': page_obj.end_index(),
+            'pages': paginator.num_pages,
+            'hits': paginator.count,
+            'page_range': paginator.page_range,
+        }, context_processors)
+    else:
+        c = RequestContext(request, {
+            '%s_list' % template_object_name: queryset,
+            'paginator': None,
+            'page_obj': None,
+            'is_paginated': False,
+        }, context_processors)
+        if not allow_empty and len(queryset) == 0:
+            raise Http404
+    for key, value in extra_context.items():
+        if callable(value):
+            c[key] = value()
+        else:
+            c[key] = value
+    if not template_name:
+        model = queryset.model
+        template_name = "%s/%s_list.html" % (
+            model._meta.app_label, model._meta.object_name.lower()
+        )
+    if renderer:
+        return HttpResponse(renderer(template_name, c))
+    t = template_loader.get_template(template_name)
+    return HttpResponse(t.render(c), mimetype=mimetype)
+# }}} 
