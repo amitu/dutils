@@ -7,6 +7,7 @@ from django.core.management import ManagementUtility
 from django.http import HttpResponse, Http404
 
 import path, sys
+sys.path.append(".")
 # }}} 
 
 # get_response_or_urlpatterns # {{{ 
@@ -22,8 +23,12 @@ def get_response_or_urlpatterns(get_response):
 
 # handle_folder # {{{ 
 def handle_folder(request):
+    module_to_import = request.path[1:].replace("/", ".")
+    if not module_to_import:
+        module_to_import = "index"
+    print module_to_import
     try:
-        mod = __import__(request.path.split("/")[1]) # FIXME
+        mod = __import__(module_to_import)
     except (ImportError, ValueError), e:
         raise Http404(e)
     resp = mod.handle(request)
@@ -50,10 +55,17 @@ urlpatterns = patterns('',
 # get_response # {{{ 
 def get_params():
     "get debug, ip, port, from command line"
-    return { 
+    base_settings = {
         "DEBUG": True, "INSTALLED_APPS": ["dutils"], "APP_DIR": path.path("."),
         "ROOT_URLCONF": "dutils.pld", "TEMPLATE_DIRS": ["templates",],
     }
+    try:
+        import settings as local_settings
+    except ImportError: 
+        pass
+    else:
+        base_settings.update(local_settings.__dict__)
+    return base_settings
 # }}} 
 
 if __name__ == "__main__":

@@ -4,16 +4,27 @@
    contain the root `toctree` directive.
 
 Welcome to dutils's documentation!
-==================================
+**********************************
+
+.. include:: global.rst
 
 dutils is a set of utility tools for working with django_ projects.
 
-Contents:
+Dutils can be installed by::
+
+    easy_install -U dutils
+
+One of the dependencies of |dutils| is :mod:`werkzeug`, install it too::
+
+    easy_install -U werkzeug
+
+Table of Contents
+=================
 
 .. toctree::
    :maxdepth: 2
 
-This is help section. 0.0.2
+   pld
 
 Indices and tables
 ==================
