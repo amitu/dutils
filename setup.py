@@ -7,9 +7,11 @@ else:
 
 from setuptools import setup, find_packages
 
+import dutils
+
 setup(
     name="dutils",
-    version="0.0.2",
+    version=dutils.VERSION,
     description="Useful django utilities",
     long_description="""Reusable django utilities.""",
     author="Amit Upadhyay",
