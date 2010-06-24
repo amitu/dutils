@@ -827,10 +827,7 @@ def clean_data(func):
 # }}}
 
 # get address book from google # {{{
-
-
 class GContacts(object):
-    
     def __init__(self, email, password):
         import gdata.contacts
         self.gd_client = gdata.contacts.service.ContactsService()

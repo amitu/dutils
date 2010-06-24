@@ -1,0 +1,2 @@
+Generic Paginator Template Tag
+******************************
