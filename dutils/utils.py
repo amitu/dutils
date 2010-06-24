@@ -560,7 +560,7 @@ def fb_get_uid(request):
 class JSONResponse(HttpResponse):
     def __init__(self, data):
         HttpResponse.__init__(
-            self, content=simplejson.dumps(data),
+            self, content=simplejson.dumps(data, cls=JSONEncoder),
             #mimetype="text/html",
         ) 
 # }}}
@@ -731,13 +731,15 @@ class SizeAndTimeMiddleware(object):
         return response
 # }}} 
 
-# LazyEncoder # {{{ 
-class LazyEncoder(simplejson.JSONEncoder):
+# JSONEncoder # {{{ 
+class JSONEncoder(simplejson.JSONEncoder):
     def default(self, o):
         if isinstance(o, Promise):
             return force_unicode(o)
+        if isinstance(o, datetime):
+            return o.strftime('%Y-%m-%dT%H:%M:%S')
         else:
-            return super(LazyEncoder, self).default(o)
+            return super(JSONEncoder, self).default(o)
 # }}} 
 
 # form_handler # {{{
