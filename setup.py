@@ -1,8 +1,9 @@
 try:
     from ez_setup import use_setuptools
-    use_setuptools()
 except ImportError:
     pass
+else:
+    use_setuptools()
 
 from setuptools import setup, find_packages
 

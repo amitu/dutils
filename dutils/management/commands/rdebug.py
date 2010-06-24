@@ -8,6 +8,11 @@ try:
 except ImportError, e: import_excpetion = e
 else: import_excpetion = False
 
+def null_technical_500_response(request, exc_type, exc_value, tb):
+        raise exc_type, exc_value, tb
+from django.views import debug
+debug.technical_500_response = null_technical_500_response
+
 class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
         make_option(
