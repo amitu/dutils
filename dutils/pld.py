@@ -41,7 +41,7 @@ def get_params():
     "get debug, ip, port, from command line"
     return { 
         "DEBUG": True, "INSTALLED_APPS": ["dutils"], "APP_DIR": path.path("."),
-        "ROOT_URLCONF": "dutils.pld",
+        "ROOT_URLCONF": "dutils.pld", "TEMPLATE_DIRS": ["templates",],
     }
 
 if __name__ == "__main__":

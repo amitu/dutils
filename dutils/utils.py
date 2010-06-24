@@ -983,7 +983,7 @@ def templated(template, mimetype="text/html"):
     through without any processing.
     """
     from django.shortcuts import render_to_response
-    from django.generic.views.simple import direct_to_template
+    from django.views.generic.simple import direct_to_template
     def decorator(view):
         @wraps(view)
         def wrapped(request, *args, **kwargs):
