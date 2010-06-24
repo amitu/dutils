@@ -13,9 +13,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-*help*
-
-This is help section.
+This is help section. 0.0.2
 
 Indices and tables
 ==================
