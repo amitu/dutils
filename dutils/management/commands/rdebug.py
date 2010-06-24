@@ -29,7 +29,7 @@ class Command(BaseCommand):
     def handle(self, **options):
         if import_excpetion:
             print "Get werkzeug module form http://werkzeug.pocoo.org/download"
-            raise import_excpetion
+            raise SystemExit
         run_simple(
             options["ip"], int(options["port"]), 
             DebuggedApplication(WSGIHandler(), True)
