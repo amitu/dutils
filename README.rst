@@ -3,6 +3,8 @@ DUtils -- Django Utilities
 
 This is a collection of django related utilities.
 
+Documentation: http://packages.python.org/dutils/
+
 Note To Self
 ============
 
