@@ -10,8 +10,14 @@ Note To Self
 
 For a new release, update dutils/__init__.py, VERSION number.
 
-python setup.py sdist upload
-python setup.py build_sphinx
-python setup.py upload_sphinx
+.. code-block:: sh
 
-Sphinx required: sudo easy_install -U sphinx sphinx-pypi-upload
+    $ python setup.py sdist upload
+    $ python setup.py build_sphinx
+    $ python setup.py upload_sphinx
+
+Sphinx required::
+
+.. code-block:: sh
+
+    $ sudo easy_install -U sphinx sphinx-pypi-upload
