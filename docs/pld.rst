@@ -72,7 +72,7 @@ This means handlers can use django's template system for serving, for example::
 To use the template, create a folder named `templates` in current folder, and
 store `index.html` in it:
 
-.. code-block:: django
+.. code-block:: html+django
 
     <h1>Current time is {{ current_time }}</h1>
 

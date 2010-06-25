@@ -20,13 +20,83 @@ template files:
 
     {% load dutils_tags %}
 
+clevercss -- tag
+================
+
+|dutils| contains a filter for converting CleverCSS_ to css.
+
+.. note:
+
+    CleverCSS is a small markup language for CSS inspired by Python that can be
+    used to build a style sheet in a clean and structured way. In many ways
+    it's cleaner and more powerful than CSS2 is.
+
+Example usage:
+
+.. code-block:: html+django
+
+    <style>
+        {% clevercss %}
+        ul#comments, ol#comments:
+          margin: 0
+          padding: 0
+
+          li:
+            padding: 0.4em
+            margin: 0.8em 0 0.8em
+
+            h3:
+              font-size: 1.2em
+            p:
+              padding: 0.3em
+            p.meta:
+              text-align: right
+              color: #ddd
+        {% endclevercss %}
+    </style>
+
+This gets converted to:
+
+.. code-block:: html
+
+    <style>
+        ul#comments,
+        ol#comments {
+          margin: 0;
+          padding: 0;
+        }
+
+        ul#comments li,
+        ol#comments li {
+          padding: 0.4em;
+          margin: 0.8em 0 0.8em;
+        }
+
+        ul#comments li h3,
+        ol#comments li h3 {
+          font-size: 1.2em;
+        }
+
+        ul#comments li p,
+        ol#comments li p {
+          padding: 0.3em;
+        }
+
+        ul#comments li p.meta,
+        ol#comments li p.meta {
+          text-align: right;
+          color: #dddddd;
+        }
+    </style>
+
+
 gravatar -- filter
 ==================
 
 This filter can be applied on email addresses, and coverts it to URL that can
 be used as part of <img> tag:
 
-.. code-block:: django
+.. code-block:: html+django
 
     <img src="{{ user.email|gravatar }}">
 
@@ -80,7 +150,7 @@ configure for gravatar_:
 
 All these parameters can be specified as argument to `gravatar` tag:
 
-.. code-block:: django
+.. code-block:: html+django
 
     <img src="{{ user.email|gravatar:"48:pg:mm" }}>
 
@@ -88,14 +158,14 @@ The order of paramters is size:rating:default. If only one parameter is
 specified, its assumed to be size, if two are provided, its size and rating,
 and if all three are passed, its size, rating and default.
 
-.. code-block:: django
+.. code-block:: html+django
 
     <img src="{{ user.email|gravatar:"24" }}>
 
 Any paramter can be left out to retain its default value. Eg, specifying
 default without touching default size or rating:
 
-.. code-block:: django
+.. code-block:: html+django
 
     <img src="{{ user.email|gravatar:"::monsterid" }}>
 
