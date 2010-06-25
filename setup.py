@@ -25,8 +25,11 @@ Documentation: http://packages.python.org/dutils/
         "dutils.management.commands", "dutils.templatetags",
     ],
     #package_dir={'dutils': "."},
+)
+
+"""
     classifiers = [
-        """ Development Status :: 3 - Alpha
+        ""Development Status :: 3 - Alpha
 Environment :: Web Environment
 Framework :: Django
 Intended Audience :: Developers
@@ -36,6 +39,6 @@ Operating System :: POSIX
 Programming Language :: Python
 Topic :: Internet :: WWW/HTTP :: Dynamic Content
 Topic :: Software Development :: Libraries :: Application Frameworks
-Topic :: Utilities""" . splitlines()
+Topic :: Utilities"" . splitlines()
     ],
-)
+"""
