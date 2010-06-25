@@ -749,7 +749,7 @@ class JSONEncoder(simplejson.JSONEncoder):
 
 # form_handler # {{{
 def form_handler(
-    request, form_cls, require_login=False, block_get=False,
+    request, form_cls, require_login=False, block_get=False, ajax=False,
     next=None, template=None, login_url=None, pass_request=True
 ):
     """
@@ -757,6 +757,7 @@ def form_handler(
     around the form. This generic view can be used for them.
     """
     from django.shortcuts import render_to_response
+    is_ajax = require.is_ajax() or ajax or request.REQUEST.get("json") == "true"
     if login_url is None: 
         login_url = getattr(settings, "LOGIN_URL", "/login/")
     if callable(require_login): 
@@ -767,7 +768,7 @@ def form_handler(
         if require_login == "404":
             raise Http404("login required")
         redirect_url = "%s?next=%s" % (login_url, request.path) # FIXME
-        if request.REQUEST.get("json") == "true":
+        if is_ajax:
             return JSONResponse({ 'success': False, 'redirect': redirect_url })
         return HttpResponseRedirect(redirect_url)
     if block_get and request.method != "POST":
@@ -790,12 +791,11 @@ def form_handler(
         form = form_cls(request.REQUEST)
     if form.is_valid():
         saved = form.save()
-        if request.REQUEST.get("json") == "true":
-            return JSONResponse({ 'success': True, 'response': saved })
+        if is_ajax: return JSONResponse({ 'success': True, 'response': saved })
         if next: return HttpResponseRedirect(next)
         if template: return HttpResponseRedirect(saved)
         return JSONResponse({ 'success': True, 'response': saved })
-    if request.REQUEST.get("json") == "true":
+    if is_ajax:
         return JSONResponse({ 'success': False, 'errors': form.errors })
     if template:
         return render_to_response(

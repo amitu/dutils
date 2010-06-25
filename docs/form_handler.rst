@@ -5,7 +5,7 @@ Form Handler
 
 `dutils.utils.form_handler` is a generic view that can be used for handling forms.
 
-.. function:: dutils.utils.form_handler(request, form_cls, require_login=False, block_get=False, next=None, template=None, login_url=None, pass_request=True)
+.. function:: dutils.utils.form_handler(request, form_cls, require_login=False, block_get=False, next=None, template=None, login_url=None, pass_request=True, ajax=False)
 
     Some ajax heavy apps require a lot of views that are merely a wrapper
     around the form. This generic view can be used for them.
@@ -19,6 +19,7 @@ Form Handler
     :param template: if passed, this template will be used to render form
     :param login_url: user will be redirected to this user if login is required
     :param pass_request: form instance would be created with request as first parameter if this is true
+    :param ajax: if this is true, form_handler will only return JSON data
     :rtype: instance of HttpResponse_ subclass
 
 Use Cases
@@ -182,7 +183,9 @@ Doing Ajax
 ----------
 
 Lets say we want to export all this as ajax. You actually don't have to do
-anything, just pass "json=true" as a REQUEST parameter.
+anything, just pass "json=true" as a REQUEST parameter. You don't even have to
+do that if request is coming from a browser with proper headers, as required by
+`is_ajax <http://docs.djangoproject.com/en/dev/ref/request-response/#django.http.HttpRequest.is_ajax>`_.
 
 The form will return JSON objects, with parameter `success` which is `true` or
 `false`.
