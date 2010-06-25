@@ -180,5 +180,22 @@ function. This can get inconvenient when you do not have, or know the password.
 This function is typically useful for features like logging a user in after
 they have clicked on email confirmation link, or for imporsonate a user etc.
 
+ip_shell - IPython Shell
+========================
+
+|utils| comes with a utility function ip_shell, that stops the execution and
+launches IPython Shell. This can be used for debugging the context at given
+location. ::
+
+    from dutils import utils
+
+    def index(request):
+        utils.ip_shell()
+        # rest
+
+.. note::
+
+    This should only be used with a debugging server that runs in foreground.
+
 object_list
 ===========

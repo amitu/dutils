@@ -758,7 +758,7 @@ def form_handler(
     around the form. This generic view can be used for them.
     """
     from django.shortcuts import render_to_response
-    is_ajax = require.is_ajax() or ajax or request.REQUEST.get("json") == "true"
+    is_ajax = request.is_ajax() or ajax or request.REQUEST.get("json")=="true"
     if login_url is None: 
         login_url = getattr(settings, "LOGIN_URL", "/login/")
     if callable(require_login): 
@@ -1235,4 +1235,10 @@ def object_list(request, queryset, paginate_by=None, page=None,
         return HttpResponse(renderer(template_name, c))
     t = template_loader.get_template(template_name)
     return HttpResponse(t.render(c), mimetype=mimetype)
+# }}} 
+
+# ip_shell # {{{ 
+def ip_shell():
+    from IPython import Shell
+    Shell.IPShellEmbed()()
 # }}} 
