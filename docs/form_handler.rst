@@ -22,9 +22,6 @@ Form Handler
     :param ajax: if this is true, form_handler will only return JSON data
     :rtype: instance of HttpResponse_ subclass
 
-Use Cases
-=========
-
 `form_handler` can be used in various scenarios.
 
 Simple Form Handling
@@ -200,4 +197,29 @@ parameter `redirect` which contains the URL to which user has to be redirected.
 
 If `success` is `false` because of form validation errors, a property `errors`
 contains JSON encoded error messages.
+
+This is too much typing
+-----------------------
+
+|dutils| comes with a utility function `fhurl`, that can be used
+`django.conf.urls.defaults.url`.
+
+Original urlconf::
+
+    urlpatterns = patterns('',
+        url(r'^create-book/$',
+           "dutils.utils.form_handler",
+           {
+               'template': 'create-book.html',
+               "form_cls": CreateBookForm,
+           },
+        ),
+    )
+
+With `fhurl`::
+
+    urlpatterns = patterns('',
+        fhurl(r'^create-book/$', template='create-book.html', form_cls=CreateBookForm),
+    )
+
 

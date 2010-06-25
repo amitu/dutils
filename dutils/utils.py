@@ -1,5 +1,6 @@
 # imports # {{{ 
 from django.utils import simplejson
+from django.conf.urls.defaults import url
 from django.conf import settings
 from django import forms
 from django.core.files.base import ContentFile
@@ -805,6 +806,12 @@ def form_handler(
         )
     return JSONResponse({ 'success': False, 'errors': form.errors })
 # }}}
+
+# fhurl # {{{ 
+def fhurl(reg, **kw):
+    name = kw.pop("name", None)
+    return url(reg, form_handler, kw, name=name)
+# }}} 
 
 # copy_file_to_s3 # {{{ 
 s3_operation_lock = threading.Condition(threading.Lock())
