@@ -16,7 +16,7 @@ For a new release, update dutils/__init__.py, VERSION number.
     $ python setup.py build_sphinx
     $ python setup.py upload_sphinx
 
-Sphinx required::
+Sphinx required:
 
 .. code-block:: sh
 
