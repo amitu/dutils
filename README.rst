@@ -8,16 +8,12 @@ Documentation: http://packages.python.org/dutils/
 Note To Self
 ============
 
-For a new release, update dutils/__init__.py, VERSION number.
-
-.. code-block:: sh
+For a new release, update dutils/__init__.py, VERSION number.::
 
     $ python setup.py sdist upload
     $ python setup.py build_sphinx
     $ python setup.py upload_sphinx
 
-Sphinx required:
-
-.. code-block:: sh
+Sphinx required::
 
     $ sudo easy_install -U sphinx sphinx-pypi-upload
