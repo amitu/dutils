@@ -29,7 +29,7 @@ Table of Contents
    dutils_tags
    kvds
    kvds_server
-   shampl
+   shpaml
    pops3_mail
    rdebug
    spell_checker

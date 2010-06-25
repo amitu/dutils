@@ -8,3 +8,4 @@
 .. _Form: http://docs.djangoproject.com/en/dev/topics/forms/#form-objects
 .. _gravatar: http://en.gravatar.com/
 .. _CleverCSS: http://sandbox.pocoo.org/clevercss/
+.. _shpaml: http://shpaml.webfactional.com/
