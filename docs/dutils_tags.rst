@@ -25,11 +25,15 @@ clevercss -- tag
 
 |dutils| contains a filter for converting CleverCSS_ to css.
 
-.. note:
+.. note::
 
     CleverCSS is a small markup language for CSS inspired by Python that can be
     used to build a style sheet in a clean and structured way. In many ways
     it's cleaner and more powerful than CSS2 is.
+
+    To install it, do the following::
+
+        $ sudo easy_install CleverCSS
 
 Example usage:
 
