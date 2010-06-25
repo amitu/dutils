@@ -14,10 +14,6 @@ Dutils can be installed by::
 
     easy_install -U dutils
 
-One of the dependencies of |dutils| is :mod:`werkzeug`, install it too::
-
-    easy_install -U werkzeug
-
 Table of Contents
 =================
 
