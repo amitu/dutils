@@ -41,8 +41,8 @@ objects.
 be executed from within the browser. `rdebug` also lets you see entire python
 file, not just a few lines.
 
-How to use
-==========
+How to use it
+=============
 
 Now that warning and motivation is understood, here is how to use it::
 

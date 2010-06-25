@@ -20,7 +20,11 @@ Documentation: http://packages.python.org/dutils/
     author="Amit Upadhyay",
     author_email="code@amitu.com",
     url="http://github.com/amitu/dutils",
-    packages=["dutils"],
+    packages=[
+        "dutils", "dutils.kvds", "dutils.kvds_server", "dutils.management", 
+        "dutils.management.commands", "dutils.templatetags",
+    ],
+    #package_dir={'dutils': "."},
     classifiers = [
         """ Development Status :: 3 - Alpha
 Environment :: Web Environment
