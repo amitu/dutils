@@ -750,7 +750,7 @@ class JSONEncoder(simplejson.JSONEncoder):
 # form_handler # {{{
 def form_handler(
     request, form_cls, require_login=False, block_get=False,
-    next=None, template=None, login_url=None, 
+    next=None, template=None, login_url=None, pass_request=True
 ):
     """
     Some ajax heavy apps require a lot of views that are merely a wrapper
@@ -766,9 +766,10 @@ def form_handler(
     if require_login:
         if require_login == "404":
             raise Http404("login required")
-        return HttpResponseRedirect(
-            "%s?next=%s" % (login_url, request.path) # TODO: use right path
-        )
+        redirect_url = "%s?next=%s" % (login_url, request.path) # FIXME
+        if request.REQUEST.get("json") == "true":
+            return JSONResponse({ 'success': False, 'redirect': redirect_url })
+        return HttpResponseRedirect(redirect_url)
     if block_get and request.method != "POST":
         raise Http404("only post allowed")
     if isinstance(form_cls, basestring):
@@ -783,7 +784,10 @@ def form_handler(
             template, {"form": form_cls(request)}, # TODO: allow defaults from URL?
             context_instance=RequestContext(request)
         )
-    form = form_cls(request, request.REQUEST)
+    if pass_request:
+        form = form_cls(request, request.REQUEST)
+    else:
+        form = form_cls(request.REQUEST)
     if form.is_valid():
         saved = form.save()
         if request.REQUEST.get("json") == "true":
@@ -795,8 +799,9 @@ def form_handler(
         return JSONResponse({ 'success': False, 'errors': form.errors })
     if template:
         return render_to_response(
-            template, {"form": form}, 
-            context_instance=RequestContext(request)
+            template, {
+                "form": form_cls(request) if pass_request else form_cls()
+            }, context_instance=RequestContext(request)
         )
     return JSONResponse({ 'success': False, 'errors': form.errors })
 # }}}

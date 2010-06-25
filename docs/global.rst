@@ -5,3 +5,4 @@
 .. _User: http://docs.djangoproject.com/en/dev/topics/auth/#users
 .. _HttpRequest: http://docs.djangoproject.com/en/dev/ref/request-response/#httprequest-objects
 .. _HttpResponse: http://docs.djangoproject.com/en/dev/ref/request-response/#httpresponse-objects
+.. _Form: http://docs.djangoproject.com/en/dev/topics/forms/#form-objects
