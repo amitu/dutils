@@ -55,6 +55,7 @@ def build_docs():
 
 def upload_docs():
     local("python setup.py upload_sphinx")
+    local("open http://packages.python.org/dutils/")
 
 def release():
     local("python setup.py sdist --formats=gztar,zip upload")

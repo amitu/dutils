@@ -1,5 +1,5 @@
-New in 0.0.8
-============
+New in Development
+==================
 
 * Create ChangeLog file.
 * Updated docs to point to ChangeLog file.
