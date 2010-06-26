@@ -8,6 +8,9 @@ def all():
     update_init_py()
     update_docs_conf_py()
     commit_and_push()
+    build_docs()
+    upload_docs()
+    release()
     print "Pushed: %s" % file("VERSION").read().strip()
 
 def assert_clean():
