@@ -51,6 +51,7 @@ def commit_and_push():
 
 def build_docs():
     local("python setup.py build_sphinx")
+    local("open docs/build/html/index.html")
 
 def upload_docs():
     local("python setup.py upload_sphinx")

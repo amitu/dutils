@@ -14,6 +14,11 @@ Dutils can be installed by::
 
     easy_install -U dutils
 
+.. note::
+
+    |dutils| is developing fast, check out whats new at
+    http://github.com/amitu/dutils/blob/master/CHANGELOG.rst
+
 Table of Contents
 =================
 
