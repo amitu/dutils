@@ -15,6 +15,7 @@ from django.core.paginator import Paginator, InvalidPage
 from django.utils.functional import Promise
 from django.db.models.query import QuerySet
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -1062,6 +1063,16 @@ class LoginForm(RequestForm):
     def clean_password(self):
         username = self.cleaned_data.get('username')
         password = self.cleaned_data.get('password')
+
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            try:
+                user = User.objects.filter(email=username)[0]
+            except IndexError:
+                pass
+            else:
+                username = user.username
 
         if username and password:
             self.user_cache = authenticate(
