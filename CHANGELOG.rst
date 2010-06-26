@@ -2,6 +2,7 @@ New in 0.0.8
 ============
 
 * Create ChangeLog file.
+* Updated docs to point to ChangeLog file.
 
 New in 0.0.7
 ============
