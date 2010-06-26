@@ -1,5 +1,4 @@
 from fabric.api import *
-from fabric.contrib.console import confirm
 
 def all():
     print "Current version: %s" % file("VERSION").read().strip()
