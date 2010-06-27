@@ -799,12 +799,12 @@ def form_handler(
         raise Http404("only post allowed")
     if next: assert template, "template required when next provided"
     def get_form(with_data=False):
+        form = form_cls(request) if pass_request else form_cls()
         if with_data:
-            if pass_request:
-                return form_cls(request, request.REQUEST, request.FILES)
-            else:
-                return form_cls(request.REQUEST, request.FILES)
-        return form_cls(request) if pass_request else form_cls()
+            form.data = request.REQUEST
+            form.files = request.FILES
+            form.is_bound = True
+        return form
     if is_ajax and request.method == "GET":
         return JSONResponse(get_form_representation(get_form()))
     if template and request.method == "GET":
