@@ -747,6 +747,22 @@ class JSONEncoder(simplejson.JSONEncoder):
             return super(JSONEncoder, self).default(o)
 # }}} 
 
+# get_form_representation # {{{
+def get_form_representation(form):
+    d = {}
+    for field in form.fields:
+        value = form.fields[field]
+        print dir(value)
+        d[field] = {
+            "label": value.label.title(),
+            "help_text": value.help_text,
+            "required": value.required,
+        }
+        if field in form.initial:
+            d[field]["inital"] = form.initial[field]
+    return d
+# }}}
+
 # form_handler # {{{
 def form_handler(
     request, form_cls, require_login=False, block_get=False, ajax=False,
@@ -779,14 +795,21 @@ def form_handler(
         raise Http404("only post allowed")
     if isinstance(form_cls, basestring):
         # can take form_cls of the form: "project.app.forms.FormName"
-        from django.core.urlresolvers import get_mod_func
         mod_name, form_name = get_mod_func(form_cls)
         form_cls = getattr(__import__(mod_name, {}, {}, ['']), form_name)
     if next: assert template, "template required when next provided"
+    if is_ajax and request.method == "GET":
+        return JSONResponse(
+            get_form_representation(
+                form_cls(request) if pass_request else form_cls()
+            )
+        )
     if template and request.method == "GET":
         # TODO: all "extra" positional args and kwargs should be passed to form
         return render_to_response(
-            template, {"form": form_cls(request)}, # TODO: allow defaults from URL?
+            template, {
+                "form": form_cls(request) if pass_request else form_cls() # TODO: allow defaults from URL?
+            },
             context_instance=RequestContext(request)
         )
     if pass_request:
@@ -822,7 +845,6 @@ def form_handler(
         else:
             errors = form.errors
         return JSONResponse({ "errors": errors, "valid": not errors})
-    print "is_ajax:", is_ajax
     if is_ajax:
         return JSONResponse({ 'success': False, 'errors': form.errors })
     if template:

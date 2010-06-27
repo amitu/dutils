@@ -211,6 +211,12 @@ parameter `redirect` which contains the URL to which user has to be redirected.
 If `success` is `false` because of form validation errors, a property `errors`
 contains JSON encoded error messages.
 
+.. note::
+
+    In ajax mode, if a GET request is made, a JSON representation of form is
+    returned, containing initial values, lables, help_text etc. This can be
+    used to auto generate form, or to get initial values etc.
+
 Using Same Form For JSON Access And Normal Web Access
 -----------------------------------------------------
 
@@ -234,11 +240,11 @@ Eg::
         # validation
 
         def get_ajax(self, saved):
-            return self.book.__dict__ # this gets JSONified and returned for JSON calls
+            return self.book.__dict__ # gets JSONified for JSON calls
 
         def save(self):
             self.book = create_book(self.cleaned_data)
-            return self.book.get_absolute_url() # this goes to browser for normal usage
+            return self.book.get_absolute_url() # browser gets redirected here
 
 This Is Too Much Typing
 -----------------------

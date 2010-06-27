@@ -13,7 +13,9 @@ New in Development
   contains the redirect url, only meaningful for normal web access. Added a
   lookup for form.get_ajax(), that when present can be used to fix this issue.
   `Read docs
-  <http://packages.python.org/dutils/form_handler.html#doing-ajax>`_.
+  <file:///Users/amitupadhyay/projects/projs/dutils/docs/build/html/form_handler.html#using-same-form-for-json-access-and-normal-web-access>`_.
+* If is_ajax is true for form_handler, a GET request leads to a JSON
+  representation of form.
 
 New in 0.0.7
 ============
