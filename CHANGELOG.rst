@@ -13,11 +13,12 @@ New in Development
   contains the redirect url, only meaningful for normal web access. Added a
   lookup for form.get_ajax(), that when present can be used to fix this issue.
   `Read docs
-  <file:///Users/amitupadhyay/projects/projs/dutils/docs/build/html/form_handler.html#using-same-form-for-json-access-and-normal-web-access>`_.
+  <http://packages.python.org/dutils/form_handler.html#using-same-form-for-json-access-and-normal-web-access>`_.
 * If is_ajax is true for form_handler, a GET request leads to a JSON
   representation of form.
 * form_handler can now accept keyword arguments from URL patterns and pass them
-  to .init() for forms if .init() is available.
+  to .init() for forms if .init() is available. `Read docs
+  <http://packages.python.org/dutils/form_handler.html#forms-that-take-parameters-from-url>`_
 
 New in 0.0.7
 ============

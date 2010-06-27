@@ -178,10 +178,17 @@ Here is how to handle this situation::
         ),
     )
 
-.. note:: 
+.. note::
 
     `require_login` can be a callable. If its a callable, it will be passed
     request as the first parameter.
+
+.. note::
+
+    `require_login` can return the string "404", in which case instead of
+    redirecting user to a separate page, they will be presented with 404 error.
+    This may be the suitable behaviour if a user would never be allowed access
+    to a page, like edit page for an object not owned by that user.
 
 Forms That Take Parameters From URL
 -----------------------------------
