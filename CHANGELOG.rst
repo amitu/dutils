@@ -7,6 +7,9 @@ New in Development
 
 * Better handling of initial values of form fields in get_form_representation().
 * Merged changes done in http://github.com/dwiel/threadpool
+* Added a new app, `dutils.reg`, which will eventually be a replacement for
+  `django-registration` app.
+* Added dutils.reg.views.resend_confirmation_code view.
 
 New in 0.0.9
 ============
