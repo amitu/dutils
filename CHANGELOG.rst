@@ -6,6 +6,7 @@ New in Development
 ==================
 
 * Better handling of initial values of form fields in get_form_representation().
+* Merged changes done in http://github.com/dwiel/threadpool
 
 New in 0.0.9
 ============
