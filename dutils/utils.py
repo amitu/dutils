@@ -767,7 +767,7 @@ def get_form_representation(form):
 def form_handler(
     request, form_cls, require_login=False, block_get=False, ajax=False,
     next=None, template=None, login_url=None, pass_request=True,
-    validate_only=False,
+    validate_only=False, **kwargs
 ):
     """
     Some ajax heavy apps require a lot of views that are merely a wrapper
@@ -804,6 +804,9 @@ def form_handler(
             form.data = request.REQUEST
             form.files = request.FILES
             form.is_bound = True
+        if hasattr(form, "init"):
+            res = form.init(**kwargs)
+            if res: return res
         return form
     if is_ajax and request.method == "GET":
         return JSONResponse(get_form_representation(get_form()))
@@ -826,6 +829,7 @@ def form_handler(
                 )
             }
         )
+        if isinstance(r, HttpResponse): return r
         if next: return HttpResponseRedirect(next)
         if template: return HttpResponseRedirect(r)
         return JSONResponse(
@@ -855,8 +859,9 @@ def form_handler(
 # }}}
 
 # fhurl # {{{ 
-def fhurl(reg, **kw):
+def fhurl(reg, form_cls, **kw):
     name = kw.pop("name", None)
+    kw["form_cls"] = form_cls
     return url(reg, form_handler, kw, name=name)
 # }}} 
 

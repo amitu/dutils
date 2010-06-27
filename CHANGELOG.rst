@@ -16,6 +16,8 @@ New in Development
   <file:///Users/amitupadhyay/projects/projs/dutils/docs/build/html/form_handler.html#using-same-form-for-json-access-and-normal-web-access>`_.
 * If is_ajax is true for form_handler, a GET request leads to a JSON
   representation of form.
+* form_handler can now accept keyword arguments from URL patterns and pass them
+  to .init() for forms if .init() is available.
 
 New in 0.0.7
 ============

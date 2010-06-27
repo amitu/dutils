@@ -183,6 +183,97 @@ Here is how to handle this situation::
     `require_login` can be a callable. If its a callable, it will be passed
     request as the first parameter.
 
+Forms That Take Parameters From URL
+-----------------------------------
+
+Django websites usually have clean URLs, which means no "/edit-book/?id=123",
+rather "/book/123/edit/". We have to handle cases where data is coming from
+URLs, instead of request parameters, to initialize the form.
+
+For this use case `form_handler` requires forms with `.init()` method.
+
+Consider the original view::
+
+    @login_required
+    def edit_book(request, book_id):
+        book = get_object_or_404(Book, id=book_id)
+        if not book.user == request.user:
+             Http404
+        if request.method == "POST":
+            form = BookEditForm(book, request.POST)
+            if form.is_valid():
+                form.save()
+                return book.get_absolute_url()
+        else:
+            form = BookEditForm(book)
+        return render_to_response(
+            "edit-book.html, {"form": form, "book": book},
+            context_instance=RequestContext(request)
+        )
+
+With urls.py containing::
+
+    from django.conf.urls.defaults import *
+
+    urlpatterns = patterns('',
+        # other urls
+        url(r'^book/(?P<book_id>[\d]+)/edit/$', "myproj.myapp.view.edit_book")
+    )
+
+And forms.py with something like::
+
+    from django import forms
+
+    class BookEditForm(forms.Form):
+        title = forms.CharField(max_length=50)
+
+        def __init__(self, book, *args, **kw):
+            super(BookEditForm, self).__init__(*args, **kw)
+            self.book = book
+            self.fields["title"].initial = book.title
+
+        def save(self):
+            self.book.title = self.cleaned_data["title"]
+            self.book.save()
+
+To handle this define .init() on BookEditForm, and put the view logic for
+loading the book and doing validation in it::
+
+    from django import forms
+
+    class BookEditForm(utils.RequestForm):
+        title = forms.CharField(max_length=50)
+
+        def init(self, book_id)
+            self.book = get_object_or_404(Book, id=book_id)
+            if not self.book.user == self.request.user:
+                Http404
+            self.fields["title"].initial = self.book.title
+
+        def save(self):
+            self.book.title = self.cleaned_data["title"]
+            self.book.save()
+
+We do not need the view now, and use the form_handler like so::
+
+    urlpatterns = patterns('',
+        fhurl(
+            r'^book/(?P<book_id>[\d]+)/edit/$', 
+            "myproj.myapp.forms.BookEditForm", template="edit-book.html",
+            require_login=True
+        )
+    )
+
+`form_handler` will detect that the form has .init(), so it will call it. The
+extra argument passed from the url, `book_id`, will be passed to .init() as
+keyword argument.
+
+.. note::
+
+    Note that if .init() returns something, it is returned directly to users,
+    which means, init() can perform all kinds of checks, and redirect users to
+    different portions of site if required.
+
 Doing Ajax
 ----------
 
@@ -267,7 +358,7 @@ Original urlconf::
 With `fhurl`::
 
     urlpatterns = patterns('',
-        fhurl(r'^create-book/$', template='create-book.html', form_cls=CreateBookForm),
+        fhurl(r'^create-book/$', CreateBookForm, template='create-book.html')
     )
 
 As You Type AJAX Validation
