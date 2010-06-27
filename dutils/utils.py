@@ -767,7 +767,8 @@ def get_form_representation(form):
         dd["help_text"] = value.help_text
         dd["required"] = value.required
         if field in form.initial:
-            dd["inital"] = form.initial[field]
+            dd["initial"] = form.initial[field]
+        if value.initial: dd["initial"] = value.initial
         d[field] = dd
     return d
 # }}}
