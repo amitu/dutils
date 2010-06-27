@@ -775,6 +775,10 @@ def form_handler(
     """
     from django.shortcuts import render_to_response
     is_ajax = request.is_ajax() or ajax or request.REQUEST.get("json")=="true"
+    if isinstance(form_cls, basestring):
+        # can take form_cls of the form: "project.app.forms.FormName"
+        mod_name, form_name = get_mod_func(form_cls)
+        form_cls = getattr(__import__(mod_name, {}, {}, ['']), form_name)
     validate_only = (
         validate_only or request.REQUEST.get("validate_only") == "true"
     )
@@ -793,29 +797,23 @@ def form_handler(
         return HttpResponseRedirect(redirect_url)
     if block_get and request.method != "POST":
         raise Http404("only post allowed")
-    if isinstance(form_cls, basestring):
-        # can take form_cls of the form: "project.app.forms.FormName"
-        mod_name, form_name = get_mod_func(form_cls)
-        form_cls = getattr(__import__(mod_name, {}, {}, ['']), form_name)
     if next: assert template, "template required when next provided"
+    def get_form(with_data=False):
+        if with_data:
+            if pass_request:
+                return form_cls(request, request.REQUEST, request.FILES)
+            else:
+                return form_cls(request.REQUEST, request.FILES)
+        return form_cls(request) if pass_request else form_cls()
     if is_ajax and request.method == "GET":
-        return JSONResponse(
-            get_form_representation(
-                form_cls(request) if pass_request else form_cls()
-            )
-        )
+        return JSONResponse(get_form_representation(get_form()))
     if template and request.method == "GET":
         # TODO: all "extra" positional args and kwargs should be passed to form
         return render_to_response(
-            template, {
-                "form": form_cls(request) if pass_request else form_cls() # TODO: allow defaults from URL?
-            },
+            template, { "form": get_form() },  # TODO: allow defaults from URL?
             context_instance=RequestContext(request)
         )
-    if pass_request:
-        form = form_cls(request, request.REQUEST, request.FILES)
-    else:
-        form = form_cls(request.REQUEST, request.FILES)
+    form = get_form(with_data=True)
     if form.is_valid():
         if validate_only:
             return JSONResponse({"valid": True, "errors": {}})
@@ -850,9 +848,7 @@ def form_handler(
     if template:
         return render_to_response(
             template, {
-                "form": form if request.method == "POST" else (
-                    form_cls(request) if pass_request else form_cls()
-                ),
+                "form": form if request.method == "POST" else get_form(),
             }, context_instance=RequestContext(request)
         )
     return JSONResponse({ 'success': False, 'errors': form.errors })

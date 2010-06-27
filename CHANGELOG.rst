@@ -1,7 +1,7 @@
 New in Development
 ==================
 
-* Create ChangeLog file.
+* Created ChangeLog file.
 * Updated docs to point to ChangeLog file.
 * Added `validation_only feature
   <http://packages.python.org/dutils/form_handler.html#as-you-type-ajax-validation>`_
