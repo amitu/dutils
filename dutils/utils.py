@@ -796,11 +796,25 @@ def form_handler(
     if form.is_valid():
         if validate_only:
             return JSONResponse({"valid": True, "errors": {}})
-        saved = form.save()
-        if is_ajax: return JSONResponse({ 'success': True, 'response': saved })
+        r = form.save()
+        if is_ajax: return JSONResponse(
+            {
+                'success': True,
+                'response': (
+                    form.get_ajax(r) if hasattr(form, "get_ajax") else r
+                )
+            }
+        )
         if next: return HttpResponseRedirect(next)
-        if template: return HttpResponseRedirect(saved)
-        return JSONResponse({ 'success': True, 'response': saved })
+        if template: return HttpResponseRedirect(r)
+        return JSONResponse(
+            {
+                'success': True,
+                'response': (
+                    form.get_ajax(r) if hasattr(form, "get_ajax") else r
+                )
+            }
+        )
     if validate_only:
         if "field" in request.REQUEST:
             errors = form.errors.get(request.REQUEST["field"], "")
@@ -1107,19 +1121,7 @@ class LoginForm(RequestForm):
 
     def save(self):
         log_user_in(self.user_cache, self.request)
-        d = self.user_cache.__dict__
-        del d["backend"]
-        del d["password"]
-        d["profile"] = self.user_cache.get_profile().__dict__
-        del d["_profile_cache"]
-        del d["profile"]["_user_cache"]
-        del d["profile"]["phone_confirmation_code"]
-        del d["profile"]["email_confirmation_code"]
-        del d["profile"]["facebook_access_token"]
-        d["sessionid"] = self.request.session.session_key
-        if "_state" in d: del d["_state"]
-        if "_state" in d["profile"]: del d["profile"]["_state"]
-        return d
+        return "/"
 # }}}
 # }}}
 

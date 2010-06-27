@@ -65,7 +65,7 @@ urls.py::
         ),
     )
 
-The URL to be redirected is variable
+The URL To Be Redirected Is Variable
 ------------------------------------
 
 Sometimes when lets say you created a new object, and user should be redirected
@@ -91,7 +91,7 @@ such cases, do not pass `next` and let form.save() return the URL.
         ),
     )
 
-Access to request parameters required
+Access To Request Parameters Required
 -------------------------------------
 
 Sometimes for valid form processing, some aspect of request has to be know. In
@@ -147,7 +147,7 @@ form can be re written as::
 
 .. note:: since `pass_request` is `True` by default this can be omitted. 
 
-Only users with valid account can access the form
+Only Users With Valid Account Can Access The Form
 -------------------------------------------------
 
 Sometimes being logged in is not enough, you may want users to satisfy some
@@ -211,7 +211,36 @@ parameter `redirect` which contains the URL to which user has to be redirected.
 If `success` is `false` because of form validation errors, a property `errors`
 contains JSON encoded error messages.
 
-This is too much typing
+Using Same Form For JSON Access And Normal Web Access
+-----------------------------------------------------
+
+Sometimes implicit conversion of object returned by form.save() can be limiting
+in scenarios where same form is being used both for ajax handling and as normal
+webform. 
+
+Eg, /create-book/ when accessed via browser would want to return user to the
+newly created book's permalink on success, while when the same URL is invoked
+through ajax, we want to return the JSON representation of the book.
+
+To handle this, give your form a .get_ajax() method, which when available is
+called, and its output is returned to user for ajax invocation, and .save() can
+safely return the permalink of the book, which will lead to browser getting
+redirected to that user.
+
+Eg::
+
+    class CreateBook(utils.RequestForm):
+        # fields
+        # validation
+
+        def get_ajax(self, saved):
+            return self.book.__dict__ # this gets JSONified and returned for JSON calls
+
+        def save(self):
+            self.book = create_book(self.cleaned_data)
+            return self.book.get_absolute_url() # this goes to browser for normal usage
+
+This Is Too Much Typing
 -----------------------
 
 |dutils| comes with a utility function `fhurl`, that can be used
