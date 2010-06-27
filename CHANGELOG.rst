@@ -1,5 +1,11 @@
-New in 0.0.10
-=============
+New in Development
+==================
+
+.. note::
+
+    Install latest development version to get these features::
+
+        sudo easy_install -U http://github.com/amitu/dutils/tarball/master
 
 * Better handling of initial values of form fields in get_form_representation().
 
