@@ -697,14 +697,12 @@ def ajax_validator(request, form_cls):
     mod_name, form_name = get_mod_func(form_cls)
     form_cls = getattr(__import__(mod_name, {}, {}, ['']), form_name)
     form = form_cls(request.POST)
-    if "field" in request.GET: 
+    if "field" in request.GET:
         errors = form.errors.get(request.GET["field"])
         if errors: errors = errors.as_text()
     else:
         errors = form.errors
-    return JSONResponse(
-        { "errors": errors, "valid": not errors }
-    ) 
+    return JSONResponse({ "errors": errors, "valid": not errors })
 # }}}
 
 # SizeAndTimeMiddleware # {{{ 
@@ -752,7 +750,8 @@ class JSONEncoder(simplejson.JSONEncoder):
 # form_handler # {{{
 def form_handler(
     request, form_cls, require_login=False, block_get=False, ajax=False,
-    next=None, template=None, login_url=None, pass_request=True
+    next=None, template=None, login_url=None, pass_request=True,
+    validate_only=False,
 ):
     """
     Some ajax heavy apps require a lot of views that are merely a wrapper
@@ -760,7 +759,10 @@ def form_handler(
     """
     from django.shortcuts import render_to_response
     is_ajax = request.is_ajax() or ajax or request.REQUEST.get("json")=="true"
-    if login_url is None: 
+    validate_only = (
+        validate_only or request.REQUEST.get("validate_only") == "true"
+    )
+    if login_url is None:
         login_url = getattr(settings, "LOGIN_URL", "/login/")
     if callable(require_login): 
         require_login = require_login(request)
@@ -788,21 +790,32 @@ def form_handler(
             context_instance=RequestContext(request)
         )
     if pass_request:
-        form = form_cls(request, request.REQUEST)
+        form = form_cls(request, request.REQUEST, request.FILES)
     else:
-        form = form_cls(request.REQUEST)
+        form = form_cls(request.REQUEST, request.FILES)
     if form.is_valid():
+        if validate_only:
+            return JSONResponse({"valid": True, "errors": {}})
         saved = form.save()
         if is_ajax: return JSONResponse({ 'success': True, 'response': saved })
         if next: return HttpResponseRedirect(next)
         if template: return HttpResponseRedirect(saved)
         return JSONResponse({ 'success': True, 'response': saved })
+    if validate_only:
+        if "field" in request.REQUEST:
+            errors = form.errors.get(request.REQUEST["field"])
+            if errors: errors = "".join(errors)
+        else:
+            errors = form.errors
+        return JSONResponse({ "errors": errors, "valid": False})
     if is_ajax:
         return JSONResponse({ 'success': False, 'errors': form.errors })
     if template:
         return render_to_response(
             template, {
-                "form": form_cls(request) if pass_request else form_cls()
+                "form": form if request.method == "POST" else (
+                    form_cls(request) if pass_request else form_cls()
+                ),
             }, context_instance=RequestContext(request)
         )
     return JSONResponse({ 'success': False, 'errors': form.errors })
