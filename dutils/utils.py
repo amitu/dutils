@@ -747,19 +747,28 @@ class JSONEncoder(simplejson.JSONEncoder):
             return super(JSONEncoder, self).default(o)
 # }}} 
 
+# try_del # {{{ 
+def try_del(d, *args):
+    for f in args:
+        try:
+            del d[f]
+        except KeyError: pass
+    return d
+# }}} 
+
 # get_form_representation # {{{
 def get_form_representation(form):
     d = {}
     for field in form.fields:
         value = form.fields[field]
-        print dir(value)
-        d[field] = {
-            "label": value.label.title(),
-            "help_text": value.help_text,
-            "required": value.required,
-        }
+        dd = {}
+        if value.label:
+            dd["label"] = value.label.title()
+        dd["help_text"] = value.help_text
+        dd["required"] = value.required
         if field in form.initial:
-            d[field]["inital"] = form.initial[field]
+            dd["inital"] = form.initial[field]
+        d[field] = dd
     return d
 # }}}
 
@@ -825,7 +834,7 @@ def form_handler(
             {
                 'success': True,
                 'response': (
-                    form.get_ajax(r) if hasattr(form, "get_ajax") else r
+                    form.get_json(r) if hasattr(form, "get_json") else r
                 )
             }
         )
@@ -836,7 +845,7 @@ def form_handler(
             {
                 'success': True,
                 'response': (
-                    form.get_ajax(r) if hasattr(form, "get_ajax") else r
+                    form.get_json(r) if hasattr(form, "get_json") else r
                 )
             }
         )

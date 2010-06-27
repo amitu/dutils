@@ -1,6 +1,11 @@
 New in Development
 ==================
 
+* Added a try_del(dict, \*keys_to_remove) method, removes all keys if they are
+  there in the passed dict.
+* Minor bug fix in get_form_representation, label is not always present.
+* .get_json() is better name than .get_ajax(), changed that.
+
 New in 0.0.8
 ============
 

@@ -326,7 +326,7 @@ Eg, /create-book/ when accessed via browser would want to return user to the
 newly created book's permalink on success, while when the same URL is invoked
 through ajax, we want to return the JSON representation of the book.
 
-To handle this, give your form a .get_ajax() method, which when available is
+To handle this, give your form a .get_json() method, which when available is
 called, and its output is returned to user for ajax invocation, and .save() can
 safely return the permalink of the book, which will lead to browser getting
 redirected to that user.
@@ -337,7 +337,7 @@ Eg::
         # fields
         # validation
 
-        def get_ajax(self, saved):
+        def get_json(self, saved):
             return self.book.__dict__ # gets JSONified for JSON calls
 
         def save(self):
