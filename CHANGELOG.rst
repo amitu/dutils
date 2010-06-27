@@ -1,6 +1,9 @@
 New in Development
 ==================
 
+New in 0.0.8
+============
+
 * Created ChangeLog file.
 * Updated docs to point to ChangeLog file.
 * Added `validation_only feature
@@ -18,7 +21,7 @@ New in Development
   representation of form.
 * form_handler can now accept keyword arguments from URL patterns and pass them
   to .init() for forms if .init() is available. `Read docs
-  <http://packages.python.org/dutils/form_handler.html#forms-that-take-parameters-from-url>`_
+  <http://packages.python.org/dutils/form_handler.html#forms-that-take-parameters-from-url>`_.
 
 New in 0.0.7
 ============

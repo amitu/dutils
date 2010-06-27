@@ -214,7 +214,7 @@ Consider the original view::
         else:
             form = BookEditForm(book)
         return render_to_response(
-            "edit-book.html, {"form": form, "book": book},
+            "edit-book.html", {"form": form, "book": book},
             context_instance=RequestContext(request)
         )
 
@@ -251,7 +251,7 @@ loading the book and doing validation in it::
     class BookEditForm(utils.RequestForm):
         title = forms.CharField(max_length=50)
 
-        def init(self, book_id)
+        def init(self, book_id):
             self.book = get_object_or_404(Book, id=book_id)
             if not self.book.user == self.request.user:
                 Http404
