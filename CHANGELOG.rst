@@ -1,5 +1,10 @@
-New in Development
-==================
+New in 0.0.10
+=============
+
+* Better handling of initial values of form fields in get_form_representation().
+
+New in 0.0.9
+============
 
 * Added a try_del(dict, \*keys_to_remove) method, removes all keys if they are
   there in the passed dict.
