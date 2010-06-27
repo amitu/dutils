@@ -3,9 +3,10 @@ Form Handler
 
 .. include:: global.rst
 
-`dutils.utils.form_handler` is a generic view that can be used for handling forms.
+`dutils.utils.form_handler` is a generic view that can be used for handling
+forms.
 
-.. function:: dutils.utils.form_handler(request, form_cls, require_login=False, block_get=False, next=None, template=None, login_url=None, pass_request=True, ajax=False)
+.. function:: dutils.utils.form_handler(request, form_cls, require_login=False, block_get=False, next=None, template=None, login_url=None, pass_request=True, ajax=False, validate_only=False)
 
     Some ajax heavy apps require a lot of views that are merely a wrapper
     around the form. This generic view can be used for them.
@@ -13,13 +14,17 @@ Form Handler
     :param request: request object, instance of HttpRequest_
     :param form_cls: form class to use
     :type form_cls: string or instance of Form_ subclass.
-    :param require_login: boolean or callable, if this is true, use must login before they can interact with the form
+    :param require_login: boolean or callable, if this is true, use must login
+        before they can interact with the form
     :param block_get: if true, GET requests are not allowed.
     :param next: if passed, user will be redirected to this url after success
     :param template: if passed, this template will be used to render form
     :param login_url: user will be redirected to this user if login is required
-    :param pass_request: form instance would be created with request as first parameter if this is true
+    :param pass_request: form instance would be created with request as first
+        parameter if this is true
     :param ajax: if this is true, form_handler will only return JSON data
+    :param validate_only: if this is true, form_handler will only validate
+        fields and wont call form.save()
     :rtype: instance of HttpResponse_ subclass
 
 `form_handler` can be used in various scenarios.
@@ -40,10 +45,12 @@ A typical form handler in django is the following view::
         else:
             form = MyForm()
         return render_to_response(
-            "my_form.html", { "form": form }, context_instance=RequestContext(request)
+            "my_form.html", { "form": form },
+            context_instance=RequestContext(request)
         )
 
-This can be handled by `form_handler` by putting the following entries in urls.py::
+This can be handled by `form_handler` by putting the following entries in
+urls.py::
 
     from django.conf.urls.defaults import *
 
@@ -182,10 +189,16 @@ Doing Ajax
 Lets say we want to export all this as ajax. You actually don't have to do
 anything, just pass "json=true" as a REQUEST parameter. You don't even have to
 do that if request is coming from a browser with proper headers, as required by
-`is_ajax <http://docs.djangoproject.com/en/dev/ref/request-response/#django.http.HttpRequest.is_ajax>`_.
+`is_ajax
+<http://docs.djangoproject.com/en/dev/ref/request-response/#django.http.HttpRequest.is_ajax>`_.
 
 The form will return JSON objects, with parameter `success` which is `true` or
 `false`.
+
+.. code-block:: sh
+
+    $ curl -d "username=newf&field=username&json=true" "http://localhost:8000/register/"
+    {"errors": {"password1": ["This field is required."], "email": ["This field is required."]}, "success": false}
 
 If its `true` when everything goes well, in this case, it will contain
 `response` parameter, which will be JSON encoded value of whatever was returned
@@ -222,4 +235,49 @@ With `fhurl`::
         fhurl(r'^create-book/$', template='create-book.html', form_cls=CreateBookForm),
     )
 
+As You Type AJAX Validation
+---------------------------
 
+`form_handler` can be used for validating partially filled forms for as you
+type validation of web forms.
+
+This feature can be setup either on the URL basis by passing `validate_only` to
+`form_handler` in `urls.py`, or on a per request basis by passing
+`validate_only` request parameter.
+
+If its being done on request basis, no setup is required, just pass the
+`validate_only` parameter:
+
+.. code-block:: sh
+
+    $ curl -d "validate_only=true&username=&field=username" "http://localhost:8000/register/"
+    {"errors": "This field is required.", "valid": false}
+    $ curl -d "validate_only=true&username=amitu&field=username" "http://localhost:8000/register/"
+    {"errors": "This username is already taken. Please choose another.", "valid": false}
+    $ curl -d "validate_only=true&username=newf&field=username" "http://localhost:8000/register/"
+    {"errors": "", "valid": true}
+
+Some javascript to handle it:
+
+.. code-block:: javascript
+
+    $(function(){
+        $("#id_username, #id_password, #id_password2, #id_email").blur(function(){
+            var url = "/register/?validate_only=true&field=" + this.name;
+            var field = this.name;
+            $.ajax({
+                url: url, data: $("#registration_form").serialize(),
+                type: "post", dataType: "json",    
+                success: function (response){ 
+                    if(response.valid)
+                    {
+                        $("#"+field+"_errors").html("Sounds good");
+                    }
+                    else
+                    {
+                        $("#"+field+"_errors").html(response.errors);
+                    }
+                }
+            });
+        });
+    });

@@ -803,11 +803,12 @@ def form_handler(
         return JSONResponse({ 'success': True, 'response': saved })
     if validate_only:
         if "field" in request.REQUEST:
-            errors = form.errors.get(request.REQUEST["field"])
+            errors = form.errors.get(request.REQUEST["field"], "")
             if errors: errors = "".join(errors)
         else:
             errors = form.errors
-        return JSONResponse({ "errors": errors, "valid": False})
+        return JSONResponse({ "errors": errors, "valid": not errors})
+    print "is_ajax:", is_ajax
     if is_ajax:
         return JSONResponse({ 'success': False, 'errors': form.errors })
     if template:
@@ -1116,6 +1117,8 @@ class LoginForm(RequestForm):
         del d["profile"]["email_confirmation_code"]
         del d["profile"]["facebook_access_token"]
         d["sessionid"] = self.request.session.session_key
+        if "_state" in d: del d["_state"]
+        if "_state" in d["profile"]: del d["profile"]["_state"]
         return d
 # }}}
 # }}}
