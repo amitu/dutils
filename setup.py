@@ -21,10 +21,9 @@ Documentation: http://packages.python.org/dutils/
     author_email="code@amitu.com",
     url="http://github.com/amitu/dutils",
     packages=[
-        "dutils", "dutils.kvds", "dutils.kvds_server", "dutils.management", 
-        "dutils.management.commands", "dutils.templatetags",
+        "dutils", "dutils.kvds", "dutils.kvds_server", "dutils.management",
+        "dutils.management.commands", "dutils.templatetags", "dutils.reg",
     ],
-    #package_dir={'dutils': "."},
 )
 
 """

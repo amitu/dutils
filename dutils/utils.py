@@ -14,7 +14,6 @@ from django.template.defaultfilters import filesizeformat
 from django.core.paginator import Paginator, InvalidPage
 from django.utils.functional import Promise
 from django.db.models.query import QuerySet
-from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -1097,65 +1096,6 @@ class QuerySetManager(models.Manager):
 
     def __getattr__(self, attr, *args):
         return getattr(self.get_query_set(), attr, *args)
-# }}}
-
-# dutils.auth # {{{
-# LoginForm # {{{
-class LoginForm(RequestForm):
-    """
-    Base class for authenticating users. Extend this to get a form that accepts
-    username/password logins.
-
-    Example usage:
-    --------------
-        url(r'^login/$',
-           "dutils.utils.form_handler",
-           {
-               'template': 'registration/login.html',
-               "form_cls": "dutils.utils.LoginForm",
-               "next": "/",
-           },
-           name='auth_login'
-        ),
-    """
-    username = forms.CharField(label=_("Username"), max_length=30)
-    password = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
-
-    def clean_password(self):
-        username = self.cleaned_data.get('username')
-        password = self.cleaned_data.get('password')
-
-        try:
-            user = User.objects.get(username=username)
-        except User.DoesNotExist:
-            try:
-                user = User.objects.filter(email=username)[0]
-            except IndexError:
-                pass
-            else:
-                username = user.username
-
-        if username and password:
-            self.user_cache = authenticate(
-                username=username, password=password
-            )
-            if self.user_cache is None:
-                raise forms.ValidationError(_("Please enter a correct username and password. Note that both fields are case-sensitive."))
-
-        return password
-
-    def get_user_id(self):
-        if self.user_cache:
-            return self.user_cache.id
-        return None
-
-    def get_user(self):
-        return self.user_cache
-
-    def save(self):
-        log_user_in(self.user_cache, self.request)
-        return "/"
-# }}}
 # }}}
 
 # get_fb_access_token_from_request # {{{
