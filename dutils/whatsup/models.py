@@ -46,12 +46,18 @@ class Status(models.Model):
         verbose_name_plural = "status"
         get_latest_by = "created_on"
         permissions = (
-            ("can_view_whatsup_status", "Can View Whatsup Status"),
-            ("can_post_whatsup_status", "Can Post Whatsup Status"),
-            ("can_delete_whatsup_status", "Can Delete Whatsup Status"),
-            ("can_view_whatsup_admin", "Can View Whatsup Admin Page"),
-            ("can_update_whatsup_admin", "Can Change Whatsup Admin Options"),
+            ("can_view_status", "Can View Status"),
+            ("can_post_status", "Can Post Status"),
+            ("can_delete_status", "Can Delete Status"),
+            ("can_view_admin", "Can View Admin Page"),
+            ("can_update_admin", "Can Change Admin Options"),
         )
 
     def get_json(self): return try_del(self.__dict__, "_state", "_user_cache")
+
+    def soft_delete(self, user):
+        self.is_deleted = True
+        self.deleted_by = user
+        self.deleted_on = datetime.now()
+        self.save()
 # }}}

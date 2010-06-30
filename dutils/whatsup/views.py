@@ -6,12 +6,16 @@ from dutils import utils
 # }}}
 
 # perm_required # {{{
-def perm_required(perm):
+def perm_required(perm, view_view=False):
     def paramed_decorator(view):
         def decorated(request, *args, **kw):
             if (
                 whatsup_settings.IS_PRIVATE and
-                not request.user.has_perms(perm)
+                not request.user.has_perm(perm)
+            ) or (
+                whatsup_settings.IS_PUBLIC and
+                not view_view and
+                not request.user.has_perm(perm)
             ):
                 return utils.come_back_after_login(request)
             return view(request, *args, **kw)
@@ -28,7 +32,7 @@ def status_renderer(template, context):
 # }}}
 
 # index # {{{
-@perm_required("can_view_whatsup_status")
+@perm_required("whatsup.can_view_status", view_view=True)
 def index(request):
     return utils.object_list(
         request,
@@ -40,8 +44,11 @@ def index(request):
     )
 # }}}
 
-@perm_required("can_delete_whatsup_status")
-def delete_status(request): pass
-
-@perm_required("can_view_whatsup_status")
-def show_status(request): pass
+# show_status # {{{
+@perm_required("whatsup.can_view_status", view_view=True)
+@utils.templated("whatsup/show_status.html")
+def show_status(request, status_id):
+    return { 
+        "status": utils.get_object_or_404(Status, id=status_id, is_deleted=False)
+    }
+# }}}

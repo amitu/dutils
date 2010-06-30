@@ -18,6 +18,7 @@ from django.db.models.query import QuerySet
 from django.contrib.auth.models import User, SiteProfileNotAvailable
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from django.shortcuts import get_object_or_404
 
 import time, random, re, os, sys, traceback
 from hashlib import md5

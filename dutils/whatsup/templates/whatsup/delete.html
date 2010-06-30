@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Delete {{ status.text }}?{% endblock %}
+{% block main %}
+<h1>Delete {{ status }}?</h1>
+<form method="post" action=".">
+    <input type="submit" value="Yes Please!">
+</form>
+{% endblock %}

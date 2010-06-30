@@ -13,3 +13,14 @@ class PostStatus(utils.RequestForm):
             text=self.cleaned_data["text"], user=self.request.user
         )
         return reverse("whatsup_index")
+
+class DeleteStatus(utils.RequestForm):
+
+    def init(self, status_id):
+        self.obj = utils.get_object_or_404(
+            Status, id=status_id, is_deleted=False
+        )
+
+    def save(self):
+        self.obj.soft_delete(self.request.user)
+        return reverse("whatsup_index")

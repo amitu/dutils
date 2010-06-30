@@ -5,6 +5,13 @@ Install latest development version to get these features::
 New in Development
 ==================
 
+* Better handling of permissions in `dutils.whatsup` app. Base settings is now
+  called `WHATSUP_IS_PUBLIC`, instead of `IS_PUBLIC` which was plain wrong.
+* `dutils.whatsup` permission names are changed.
+
+New in 0.0.10
+=============
+
 * Better handling of initial values of form fields in
   get_form_representation().
 * Merged changes done in http://github.com/dwiel/threadpool
