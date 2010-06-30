@@ -31,8 +31,8 @@ class Status(models.Model):
             return self.order_by("-created_on")
 
         def search(self, query):
-            return self.filter(
-                Q(user__username__icontains=query) or Q(text__icontains=query)
+            return self.public().filter(
+                Q(user__username__icontains=query) | Q(text__icontains=query)
             )
     # }}}
 
@@ -59,7 +59,11 @@ class Status(models.Model):
             ("can_update_admin", "Can Change Admin Options"),
         )
 
-    def get_json(self): return try_del(self.__dict__, "_state", "_user_cache")
+    def get_json(self):
+        return try_del(
+            self.__dict__, "_state", "_user_cache", "deleted_by_id",
+            "deleted_on", "is_deleted"
+        )
 
     def soft_delete(self, user):
         self.is_deleted = True
