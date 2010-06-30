@@ -1,5 +1,6 @@
 # imports # {{{ 
 from django.utils import simplejson
+from django.contrib import admin
 from django.conf.urls.defaults import url
 from django.conf import settings
 from django import forms
@@ -14,7 +15,7 @@ from django.template.defaultfilters import filesizeformat
 from django.core.paginator import Paginator, InvalidPage
 from django.utils.functional import Promise
 from django.db.models.query import QuerySet
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, SiteProfileNotAvailable
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -167,6 +168,15 @@ class RequestForm(forms.Form):
     def __init__(self, request, *args, **kw):
         super(RequestForm, self).__init__(*args, **kw)
         self.request = request
+
+    def get_json(self, saved):
+        if hasattr(self, "obj"):
+            if hasattr(self.obj, "get_json"):
+                return self.obj.get_json()
+            return self.obj
+        if hasattr(saved, "get_json"):
+            return saved.get_json()
+        return saved
 # }}} 
 
 # profane words # {{{ 
@@ -782,6 +792,7 @@ def form_handler(
     Some ajax heavy apps require a lot of views that are merely a wrapper
     around the form. This generic view can be used for them.
     """
+    if "next" in request.REQUEST: next = request.REQUEST["next"]
     from django.shortcuts import render_to_response
     is_ajax = request.is_ajax() or ajax or request.REQUEST.get("json")=="true"
     if isinstance(form_cls, basestring):
@@ -868,10 +879,10 @@ def form_handler(
 # }}}
 
 # fhurl # {{{ 
-def fhurl(reg, form_cls, **kw):
+def fhurl(reg, form_cls, decorator=lambda x: x, **kw):
     name = kw.pop("name", None)
     kw["form_cls"] = form_cls
-    return url(reg, form_handler, kw, name=name)
+    return url(reg, decorator(form_handler), kw, name=name)
 # }}} 
 
 # copy_file_to_s3 # {{{ 
@@ -1010,13 +1021,14 @@ class attrdict(dict):
 # }}} 
 
 # get_url_with_params # {{{
-def get_url_with_params(request, path_override=None, without=None):
+def get_url_with_params(request, path_override=None, without=None, **extra):
     if path_override: path = path_override
     else: path = request.path
     querystring = request.META.get("QUERY_STRING")
     if not querystring: querystring = ""
     query_dict = dict(cgi.parse_qsl(querystring))
-    if without and without in query_dict:
+    dict.update(extra)
+    if without and without in query_dict: # TODO: handle both string or list
         del query_dict[without]
     querystring = urllib.urlencode(query_dict)
     if querystring:
@@ -1244,3 +1256,50 @@ def ip_shell():
     from IPython import Shell
     Shell.IPShellEmbed()()
 # }}} 
+
+# come_back_after_login # {{{
+def come_back_after_login(request):
+    login_url = getattr(settings, "LOGIN_URL", "/login/")
+    return HttpResponseRedirect(login_url + "?next=" + request.path) # FIXME
+# }}}
+
+# get_user_profile_class # {{{
+def get_user_profile_class():
+    if not getattr(settings, 'AUTH_PROFILE_MODULE', False):
+        raise SiteProfileNotAvailable(
+            'You need to set AUTH_PROFILE_MODULE in your project settings'
+        )
+    try:
+        app_label, model_name = settings.AUTH_PROFILE_MODULE.split('.')
+    except ValueError:
+        raise SiteProfileNotAvailable(
+            'app_label and model_name should be separated by a dot in the '
+            'AUTH_PROFILE_MODULE setting.'
+        )
+
+    model = models.get_model(app_label, model_name)
+    if model is None:
+        raise SiteProfileNotAvailable(
+            'Unable to load the profile model, check AUTH_PROFILE_MODULE in '
+            'your project settings'
+        )
+    return model
+# }}}
+
+# setup_inline_userprofile_admin # {{{
+def setup_inline_userprofile_admin(UserProfile=None):
+    if not UserProfile: UserProfile = get_user_profile_class()
+
+    class UserProfileInline(admin.StackedInline):
+        model = UserProfile
+
+    class UserAdmin(admin.ModelAdmin):
+        inlines = [UserProfileInline]
+
+    # Unregister the built in user admin and register the custom 
+    # User admin with UserProfile
+    admin.site.unregister(User)
+    admin.site.register(User, UserAdmin)
+# }}}
+
+def dump_json(**kw): return simplejson.dumps(kw, cls=JSONEncoder)

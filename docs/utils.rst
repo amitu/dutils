@@ -199,3 +199,49 @@ location. ::
 
 object_list
 ===========
+
+setup_inline_userprofile_admin
+==============================
+
+A common use case in django applications is to extend django's User by creating
+`UserProfile
+<http://docs.djangoproject.com/en/dev/topics/auth/#storing-additional-information-about-users>`_.
+This is handy and all but you will have two pages in django's admin interface
+to update user data. This can get tedious and one common solution is to inline
+the UserProfile data as part of User admin area. This can be done as follows::
+
+    from django.contrib import admin
+    from myproj.myapp.models import UserProfile
+
+    class UserProfileInline(admin.StackedInline):
+        model = UserProfile
+
+    class UserAdmin(admin.ModelAdmin):
+        inlines = [UserProfileInline]
+
+    # Unregister the built in user admin and register the custom 
+    # User admin with UserProfile
+    admin.site.unregister(User)
+    admin.site.register(User, UserAdmin)
+
+Place the above in myproj/myapp/admin.py and you are done. This gets tedious,
+and |utils| comes with `setup_inline_userprofile_admin` which does the same for
+you. Place the folling in you said admin.py::
+
+    from dutils import utils
+    utils.setup_inline_userprofile_admin()
+
+This will do the same.
+
+
+.. note::
+
+    `setup_inline_userprofile_admin` discovers the UserProfile model to user
+    using settings.AUTH_PROFILE_MODULE. If for some reason that is not set, you
+    can import the UserProfile model and pass it to
+    `setup_inline_userprofile_admin` to facilitate discovery::
+
+        from dutils import utils
+        from myproj.myapp.models import UserProfile
+
+        utils.setup_inline_userprofile_admin(UserProfile)

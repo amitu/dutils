@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Whats Up?{% endblock %}
+{% block main %}
+<h1>Whats up?</h1>
+<form method="post" action="{% url whatsup_post %}">
+    <textarea name="text"></textarea>
+    <input type="submit" value="Post">
+</form>
+{% for status in status_list %}
+    {{ status }}<br>
+{% endfor %}
+{% endblock %}

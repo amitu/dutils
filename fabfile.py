@@ -50,12 +50,16 @@ def commit_and_push():
     local('git push')
 
 def build_docs():
+    local("cp setup_docs.py setup.py")
     local("python setup.py build_sphinx")
     local("open docs/build/html/index.html")
+    local("cp setup_main.py setup.py")
 
 def upload_docs():
+    local("cp setup_docs.py setup.py")
     local("python setup.py upload_sphinx")
     local("open http://packages.python.org/dutils/")
+    local("cp setup_main.py setup.py")
 
 def release():
     local("python setup.py sdist --formats=gztar,zip upload")

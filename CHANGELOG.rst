@@ -5,11 +5,20 @@ Install latest development version to get these features::
 New in Development
 ==================
 
-* Better handling of initial values of form fields in get_form_representation().
+* Better handling of initial values of form fields in
+  get_form_representation().
 * Merged changes done in http://github.com/dwiel/threadpool
 * Added a new app, `dutils.reg`, which will eventually be a replacement for
   `django-registration` app.
 * Added dutils.reg.views.resend_confirmation_code view.
+* Added a new app, `dutils.whatsup`, its a multiperson mini blog, primarily
+  meant for internal communication. `Read docs
+  <http://packages.python.org/dutils/whatsup.html>`_
+* Added `dutils.utils.setup_inline_userprofile_admin` helper method. `Read docs
+  <http://packages.python.org/dutils/utils.html#setup-inline-userprofile-admin>`_.
+* Added `dutils.utils.come_back_after_login` helper method. Read docs.
+* Fixed a bug, now next passed to forms in form_handler has higher priority
+  compared to next passed otherwise.
 
 New in 0.0.9
 ============
