@@ -7,6 +7,8 @@ from dutils.utils import fhurl
 
 #from dutils.whatsup.feeds import feeds
 from dutils.whatsup.views import perm_required
+from dutils.whatsup.feeds import LatestStatusFeed
+feed = LatestStatusFeed()
 # }}}
 
 urlpatterns = patterns('dutils.whatsup.views',
@@ -22,5 +24,6 @@ urlpatterns = patterns('dutils.whatsup.views',
         template="whatsup/delete.html", name="whatsup_delete_status",
         decorator=perm_required("whatsup.can_delete_status"),
     ),
+    url(r"^feed/$", perm_required("whatsup.can_view_status")(feed)),
 )
 

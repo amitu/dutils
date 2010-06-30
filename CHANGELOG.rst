@@ -8,6 +8,7 @@ New in Development
 * Better handling of permissions in `dutils.whatsup` app. Base settings is now
   called `WHATSUP_IS_PUBLIC`, instead of `IS_PUBLIC` which was plain wrong.
 * `dutils.whatsup` permission names are changed.
+* `dutils.whatsup` now has a feed. It honors the perms.
 
 New in 0.0.10
 =============
