@@ -9,6 +9,7 @@ New in Development
   called `WHATSUP_IS_PUBLIC`, instead of `IS_PUBLIC` which was plain wrong.
 * `dutils.whatsup` permission names are changed.
 * `dutils.whatsup` now has a feed. It honors the perms.
+* Added search to `dutils.whatsup`.
 
 New in 0.0.10
 =============

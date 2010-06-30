@@ -34,9 +34,12 @@ def status_renderer(template, context):
 # index # {{{
 @perm_required("whatsup.can_view_status", view_view=True)
 def index(request):
+    queryset = Status.objects.public()
+    if "q" in request.REQUEST:
+        queryset = queryset.search(request.REQUEST["q"])
     return utils.object_list(
         request,
-        queryset = Status.objects.public(),
+        queryset = queryset,
         template_name = "whatsup/index.html",
         template_object_name = "status",
         paginate_by = 10,

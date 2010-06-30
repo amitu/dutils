@@ -2,6 +2,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.query import QuerySet
+from django.db.models import Q
 
 from datetime import datetime
 
@@ -28,6 +29,11 @@ class Status(models.Model):
 
         def by_recency(self):
             return self.order_by("-created_on")
+
+        def search(self, query):
+            return self.filter(
+                Q(user__username__icontains=query) or Q(text__icontains=query)
+            )
     # }}}
 
     @models.permalink
