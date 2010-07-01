@@ -131,7 +131,7 @@ class CleverCSSNode(template.Node):
     def __init__(self, nodelist):
         self.nodelist = nodelist
     def render(self, context):
-        import CleverCSSNode
+        import clevercss
         output = self.nodelist.render(context)
         return clevercss.convert(output)
 # }}} 

@@ -10,6 +10,7 @@ New in Development
 * `dutils.whatsup` permission names are changed.
 * `dutils.whatsup` now has a feed. It honors the perms.
 * Added search to `dutils.whatsup`.
+* Fixed a bug in {% clevercss %} tag implementation.
 
 New in 0.0.10
 =============
