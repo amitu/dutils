@@ -179,8 +179,10 @@ class RequestForm(forms.Form):
             return saved.get_json()
         return saved
 
-    def initial(self, field, value):
+    def initial(self, field, value, **kw):
         self.fields[field].initial = value
+        for k, v in kw.items():
+            self.field[k] = v
 # }}}
 
 # profane words # {{{ 
