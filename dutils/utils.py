@@ -179,10 +179,10 @@ class RequestForm(forms.Form):
             return saved.get_json()
         return saved
 
-    def initialize(self, field, value, **kw):
-        self.fields[field].initial = value
+    def initialize(self, field=None, value=None, **kw):
+        if field: self.fields[field].initial = value
         for k, v in kw.items():
-            self.field[k] = v
+            self.fields[k].initial = v
 
     def update_object(self, obj, *args, **kw):
         d = self.cleaned_data.get
