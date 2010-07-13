@@ -179,10 +179,18 @@ class RequestForm(forms.Form):
             return saved.get_json()
         return saved
 
-    def initial(self, field, value, **kw):
+    def initialize(self, field, value, **kw):
         self.fields[field].initial = value
         for k, v in kw.items():
             self.field[k] = v
+
+    def update_object(self, obj, *args, **kw):
+        d = self.cleaned_data.get
+        for arg in args:
+            setattr(obj, arg, d(arg))
+        for k, v in kw.items():
+            setattr(obj, k, d(v))
+        return obj
 # }}}
 
 # profane words # {{{ 
