@@ -164,7 +164,7 @@ def context_preprocessor(request):
     return d
 # }}}
 
-# RequestForm # {{{ 
+# RequestForm # {{{
 class RequestForm(forms.Form):
     def __init__(self, request, *args, **kw):
         super(RequestForm, self).__init__(*args, **kw)
@@ -178,7 +178,10 @@ class RequestForm(forms.Form):
         if hasattr(saved, "get_json"):
             return saved.get_json()
         return saved
-# }}} 
+
+    def initial(self, field, value):
+        self.fields[field].initial = value
+# }}}
 
 # profane words # {{{ 
 class SacredField(forms.CharField):
