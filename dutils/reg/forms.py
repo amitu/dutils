@@ -33,21 +33,19 @@ class LoginForm(RequestForm):
         password = self.cleaned_data.get('password')
 
         try:
-            user = User.objects.get(username=username)
+            user = User.objects.get(username__iexact=username)
         except User.DoesNotExist:
             try:
-                user = User.objects.filter(email=username)[0]
+                user = User.objects.filter(email__iexact=username)[0]
             except IndexError:
                 pass
             else:
                 username = user.username
 
-        if username and password:
-            self.user_cache = authenticate(
-                username=username, password=password
-            )
-            if self.user_cache is None:
-                raise forms.ValidationError(_("Please enter a correct username and password. Note that both fields are case-sensitive."))
+        if not user.check_password(password):
+            raise forms.ValidationError(_("Please enter a correct username and password. Note that both fields are case-sensitive."))
+
+        self.user_cache = user
 
         return password
 
