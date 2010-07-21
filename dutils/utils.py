@@ -25,7 +25,7 @@ from hashlib import md5
 import urllib2, urllib, threading, cgi, itertools
 from PIL import Image
 from functools import wraps
-from datetime import datetime
+from datetime import datetime, date
 
 import logging
 import cStringIO
@@ -766,6 +766,8 @@ class JSONEncoder(simplejson.JSONEncoder):
             return force_unicode(o)
         if isinstance(o, datetime):
             return o.strftime('%Y-%m-%dT%H:%M:%S')
+        if isinstance(o, date):
+            return o.strftime('%Y-%m-%d')
         else:
             return super(JSONEncoder, self).default(o)
 # }}} 
