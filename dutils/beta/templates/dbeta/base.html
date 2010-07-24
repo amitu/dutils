@@ -1,0 +1,25 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>{% block title %}Beta{% endblock %}</title>
+    <link rel="icon" href="/static/beta/favicon.ico" />
+    <link rel="stylesheet" type="text/css" href="/static/beta/style.css" />
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div id="header">
+        <div class="links">
+            {% if not login_page %}<a href="/login/">Sign in!</a>{% endif %}
+            {% if not invite_page %}<a href="/">Invite me</a>{% endif %}
+        </div>
+        <img src="/static/beta/logo.png">
+    </div>
+    <div id="main">
+        {% block main %}
+        {% endblock %}
+    </div>
+    <div id=footer style="padding: 10px;">
+        <span id="copyright">Copyright 2010, DUtils.Beta</span>
+        <a href="http://www.amitu.com/dutils/">Our Blog</a>
+    </div>
+</body>
+</html>
