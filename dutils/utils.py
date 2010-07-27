@@ -479,7 +479,7 @@ def send_html_mail(
         print e
         return
 
-    if not sender_formatted:
+    if sender_name and not sender_formatted:
         sender_formatted = "%s <%s>" % (sender_name, sender) 
 
     for recip in recip_list:
