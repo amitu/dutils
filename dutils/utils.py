@@ -479,12 +479,9 @@ def send_html_mail(
         print e
         return
 
-    print sender_name, sender_formatted, sender
-    if sender_name and not sender_formatted:
+    if not sender_formatted:
         sender_formatted = "%s <%s>" % (sender_name, sender) 
 
-    if not sender_formatted: sender_formatted = sender
-    print sender_formatted
 
     for recip in recip_list:
         msgRoot = MIMEMultipart('related')
