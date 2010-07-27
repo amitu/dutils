@@ -430,7 +430,7 @@ def get_content_from_path(p, data=None, number_of_tries=1):
 # send_html_mail # {{{
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
-from smtplib import SMTP
+from smtplib import SMTP, SMTP_SSL
 import email.Charset
 
 from dutils.messaging import messenger
@@ -463,7 +463,10 @@ def send_html_mail(
     if recip: recip_list.append(recip)
 
     try:
-        server = SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT)
+        if getattr(settings, "EMAIL_USE_SSL", False):
+            server = SMTP_SSL(settings.EMAIL_HOST, settings.EMAIL_PORT)
+        else:
+            server = SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT)
         if settings.EMAIL_USE_TLS:
             server.ehlo()
             server.starttls()
@@ -475,7 +478,7 @@ def send_html_mail(
     except Exception, e: 
         print e
         return
-    
+
     if not sender_formatted:
         sender_formatted = "%s <%s>" % (sender_name, sender) 
 
