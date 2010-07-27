@@ -482,6 +482,8 @@ def send_html_mail(
     if sender_name and not sender_formatted:
         sender_formatted = "%s <%s>" % (sender_name, sender) 
 
+    if not sender_formatted: sender_formatted = sender
+
     for recip in recip_list:
         msgRoot = MIMEMultipart('related')
         msgRoot['Subject'] = subject.encode("utf8", 'xmlcharrefreplace')
