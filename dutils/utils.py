@@ -442,7 +442,7 @@ email.Charset.add_charset(charset, email.Charset.SHORTEST, None, None)
 # send_html_mail = messenger.send_html_mail
 @threaded_task
 def send_html_mail(
-    subject, sender="support@fwd2tweet.com", recip="", context=None, 
+    subject, sender=settings.DEFAULT_FROM_EMAIL, recip="", context=None, 
     html_template="", text_template="", sender_name="",
     html_content="", text_content="", recip_list=None, sender_formatted=""
 ):
