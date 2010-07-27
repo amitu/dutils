@@ -514,6 +514,19 @@ def render(context, template):
     return context
 # }}}
 
+def send_mail(
+    subject, message, from_email, recipient_list, fail_silently=False,
+    auth_user=None, auth_password=None, connection=None
+):
+    send_html_mail(
+        subject, sender=from_email, html_content="<pre>%s</pre>" % message,
+        recip_list=recipient_list
+    )
+
+if getattr(settings, "DUTILS_MONKEY_PATCH_SEND_MAIL", False):
+    from django.core import mail
+    mail.send_mail = send_mail
+
 # IndianMobileField # {{{
 class IndianMobileField(forms.CharField):
     def clean(self, value):
