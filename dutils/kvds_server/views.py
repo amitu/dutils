@@ -36,11 +36,12 @@ from dutils.kvds_server import utils as ks_utils
 # }}}
 
 backend = ks_utils.load_backend()
+session_backend = ks_utils.load_session_backend()
 
 # single # {{{
 def single(request):
     return HttpResponse(
-        backend.connect().single(request.GET["key"]), mimetype="text/plain"
+        backend.single(request.GET["key"]), mimetype="text/plain"
     )
 # }}}
 
@@ -52,7 +53,7 @@ def kvds(request):
         key, value = kv.split(":", 1)
         to_set[str(key)] = value
     return JSONResponse(
-        backend.connect().kvds(
+        backend.kvds(
             request.REQUEST.get("sessionid"),
             *request.REQUEST.getlist("key"), **to_set
         )
@@ -61,15 +62,14 @@ def kvds(request):
 
 # start_session # {{{
 def start_session(request):
-    backend.connect()
     # create a new unique sessionid, store an empty session in the same
     while True:
         sessionid = utils.uuid()
-        if "session_%s" % sessionid in backend:
+        if "session_%s" % sessionid in session_backend:
             print "SESSIONID CLASH", sessionid
             continue
         else: break
-    backend.set("session_%s" % sessionid, simplejson.dumps({}))
+    session_backend.set("session_%s" % sessionid, simplejson.dumps({}))
     return JSONResponse(dict(sessionid=sessionid))
 # }}}
 
@@ -82,8 +82,8 @@ def session(request):
         key, value = kv.split(":", 1)
         to_set[str(key)] = value
     return JSONResponse(
-        backend.connect().session(
-            request.REQUEST["sessionid"],
+        backend.session(
+            request.REQUEST["sessionid"], backend = backend,
             allow_expired = { "true": True }.get(
                 request.REQUEST.get("allow_expired"), False
             ), **to_set
@@ -93,12 +93,11 @@ def session(request):
 
 # prefix # {{{
 def prefix(request):
-    return JSONResponse(backend.connect().prefix(request.REQUEST['prefix']))
-# }}} 
+    return JSONResponse(backend.prefix(request.REQUEST['prefix']))
+# }}}
 
-# index # {{{ 
+# index # {{{
 def index(request):
-    backend.connect()
     if request.method == "POST":
         form = StoreValue(request.POST)
         if form.is_valid():
@@ -115,4 +114,4 @@ def index(request):
         "kvds_index.html", { "form": form }, 
         context_instance=RequestContext(request)
     )
-# }}} 
+# }}}

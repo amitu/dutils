@@ -1,4 +1,4 @@
-""" # Documentation # {{{ 
+""" # Documentation # {{{
 Backend Base Class
 ==================
 
@@ -6,8 +6,8 @@ KVDS server talks to various data stores through the API defined in Backend.
 Each backend should create a module, module name can be specified as dotted
 string, which will be imported by dutils.kvds_server.views.
 
-Each backend is required to have a connect() top level module method, that
-will take dbstring as only parameter. connect() must either raise
+Each backend is required to have a load() top level module method, that
+will take dbstring as only parameter. load() must either raise
 ImproperlyConfigured error, if parameters passed to it are wrong. If things
 are fine, it should return an instance of class derived from
 dutils.kvds_server.backends.Backend.
@@ -15,12 +15,12 @@ dutils.kvds_server.backends.Backend.
 dutils.kvds_server.views expect the backend class to have the following
 methods: .kvds(), .single(), .sesssion() and .prefix().
 dutils.kvds_server.backends.Backend comes with one implementation of these
-methods, expecting each backend to provide .get() and .set() methods. In
+methods, expecting each backend to provide ._get() and ._set() methods. In
 certain scenarious, the algorithm used by the default parameters and
 multiple cals to .get()/.set() may be inefficeient and it may be desirable
 to overwrite one or more of the .kvds()/.single()/.session()/.prefix()
 methods.
-""" # }}} 
+""" # }}}
 
 from django.core.exceptions import ImproperlyConfigured
 from django.utils import simplejson
@@ -54,6 +54,9 @@ class Backend(object):
 
     def remove(self, key):
         self._remove(self.get_full_key(key))
+
+    def _contains(self, key):
+        raise NotImplementedError
 
     def single(self, key):
         return self.get(key)
@@ -106,12 +109,7 @@ class Backend(object):
                     try:
                         self.remove(key)
                     except KeyError: pass
-        if sessionid:
-            sessionkey = str("session_%s" % sessionid)
-            data = self.get(sessionkey)
-            session_data = simplejson.loads(data)
-            # TODO load user
-            d[":session:"] = session_data
+        if sessionid: d[":session:"] = self.session(sessionid)
         return d
 
     def prefix(self, prefix):
@@ -120,8 +118,5 @@ class Backend(object):
     def close(self): pass
 
     def __contains__(self, item):
-        raise NotImplementedError
-
-def connect(params):
-    return Backend(params)
+        return self._contains(item)
 

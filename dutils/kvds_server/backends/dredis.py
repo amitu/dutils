@@ -9,6 +9,7 @@ class RedisBackend(Backend):
         if "host" not in params: 
             raise ImproperlyConfigured("Host not specified")
         self.params = params
+        self.ty = None
 
     def connect(self):
         self.ty = redis.Redis(
@@ -17,15 +18,19 @@ class RedisBackend(Backend):
         return self
 
     def _get(self, key):
+        if not self.ty: self.connect()
         return self.ty.get(key)
 
     def _set(self, key, value):
+        if not self.ty: self.connect()
         self.ty.set(key, value)
-    
+
     def prefix(self, prefix):
+        if not self.ty: self.connect()
         return self.ty.keys("%s*" % self.get_full_key(prefix))
-    
-    def __contains__(self, key):
+
+    def _contains(self, key):
+        if not self.ty: self.connect()
         return self.ty.exists(self.get_full_key(key))
 
 def load(params):
