@@ -17,8 +17,7 @@ from django.utils.functional import Promise
 from django.db.models.query import QuerySet
 from django.contrib.auth.models import User, SiteProfileNotAvailable
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
-from django.shortcuts import get_object_or_404
+from django.core.urlresolvers import get_urlconf, get_resolver, Resolver404
 
 import time, random, re, os, sys, traceback
 from hashlib import md5
@@ -1349,6 +1348,7 @@ def setup_inline_userprofile_admin(UserProfile=None):
 
 def dump_json(**kw): return simplejson.dumps(kw, cls=JSONEncoder)
 
+# resize # {{{ 
 def resize(img, box, fit=True):
     '''Downsample the image.
     @param img: Image -  an Image-object
@@ -1382,3 +1382,38 @@ def resize(img, box, fit=True):
     img.thumbnail(box, Image.ANTIALIAS)
 
     return img
+# }}} 
+
+# NginxSSIMiddleware # {{{
+class NginxSSIMiddleware(object):
+    '''
+    Emulates Nginx SSI module for when a page is rendered from Python. SSI
+    include tags are cached for serving directly from Nginx, but if the page is
+    being built for the first time, we just serve these directly from Python
+    without having to make another request.
+
+    Takes a response object and returns the response with Nginx SSI tags
+    resolved.
+
+    Credits: http://joshuajonah.ca/blog/2010/06/18/poor-mans-esi-nginx-ssis-and-django/
+    '''
+    include_tag = re.compile(
+        r'<!--#[\s.]+include[\s.]+virtual=["\'](?P<path>.+)["\'][\s.]+-->'
+    )
+    def process_response(self, request, response):
+        resolver = get_resolver(get_urlconf())
+        patterns = resolver._get_url_patterns()
+        def get_tag_response(match):
+            for pattern in patterns:
+                try:
+                    view = pattern.resolve(match.group('path')[1:])
+                    if view:
+                        return view[0](request, *view[1], **view[2]).content
+                except Resolver404:
+                    pass
+            return match.group('path')[1:]
+        response.content = re.sub(
+            NginxSSIMiddleware.include_tag, get_tag_response, response.content
+        )
+        return response
+# }}}
