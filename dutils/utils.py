@@ -1,5 +1,6 @@
 # imports # {{{ 
 from django.utils import simplejson
+from django.views.generic.simple import direct_to_template
 from django.contrib import admin
 from django.conf.urls.defaults import url
 from django.conf import settings
@@ -19,7 +20,7 @@ from django.contrib.auth.models import User, SiteProfileNotAvailable
 from django.db import models
 from django.core.urlresolvers import get_urlconf, get_resolver, Resolver404
 
-import time, random, re, os, sys, traceback
+import time, random, re, os, sys, traceback, socket
 from hashlib import md5
 import urllib2, urllib, threading, cgi, itertools
 from PIL import Image
@@ -75,7 +76,6 @@ class PrintLogger(object):
 # SimpleExceptionHandler www.djangosnippets.org/snippets/650/ # {{{
 class SimpleExceptionHandler:
     def process_exception(self, request, exception):
-        import sys, traceback
         (exc_type, exc_info, tb) = sys.exc_info()
         response = "%s\n" % getattr(exc_type, "__name__", exc_type)
         response += "%s\n\n" % exc_info
@@ -112,13 +112,13 @@ def uuid( *args ):
 
 # solr related functions # {{{ 
 def solr_add(**data_dict):
-    s = solr.SolrConnection(SOLR_ROOT)
+    s = solr.SolrConnection(settings.SOLR_ROOT)
     s.add(**data_dict)
     s.commit()
     s.close()
 
 def solr_delete(id):
-    s = solr.SolrConnection(SOLR_ROOT)
+    s = solr.SolrConnection(settings.SOLR_ROOT)
     s.delete(id)
     s.commit()
     s.close()
@@ -127,7 +127,7 @@ def solr_search(
     q, fields=None, highlight=None, score=True, 
     sort=None, sort_order="asc", **params
 ):
-    s = solr.SolrConnection(SOLR_ROOT)
+    s = solr.SolrConnection(settings.SOLR_ROOT)
     response = s.query(
         q, fields, highlight, score, sort, sort_order, **params
     )
@@ -135,7 +135,7 @@ def solr_search(
 
 def solr_paginator(q, start,rows):
     response = {}
-    conn = solr.SolrConnection(SOLR_ROOT)
+    conn = solr.SolrConnection(settings.SOLR_ROOT)
     res = conn.query(q)
     numFound = int(res.results.numFound)
     results = res.next_batch(start=start,rows=rows).results
@@ -197,7 +197,7 @@ class SacredField(forms.CharField):
     def clean(self, value):
         value = super(SacredField,self).clean(value)
         value_words = re.split('\W+', value)
-        for word in kvds(key="profane_words")["profane_words"].split(","):
+        for word in settings.PROFANE_WORDS.split(","):
             for val_word in value_words:
                 if(val_word == word):
                     raise forms.ValidationError("%s is not an allowed word." % val_word)
@@ -207,7 +207,7 @@ class SacredANField(forms.CharField):
     def clean(self, value):
         value = super(SacredField,self).clean(value)
         value_words = re.split('\W+', value)
-        for word in kvds(key="profane_words")["profane_words"].split(","):
+        for word in settings.PROFANE_WORDS.split(","):
             for val_word in value_words:
                 if(val_word == word):
                     raise forms.ValidationError("%s is not an allowed word." % val_word)
@@ -431,8 +431,6 @@ from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from smtplib import SMTP, SMTP_SSL
 import email.Charset
-
-from dutils.messaging import messenger
 
 charset='utf-8'
 
@@ -1108,8 +1106,6 @@ def templated(template, mimetype="text/html"):
     view can also returh a HttpResponse subclass and templated will let it pass
     through without any processing.
     """
-    from django.shortcuts import render_to_response
-    from django.views.generic.simple import direct_to_template
     def decorator(view):
         @wraps(view)
         def wrapped(request, *args, **kwargs):
@@ -1416,4 +1412,9 @@ class NginxSSIMiddleware(object):
             NginxSSIMiddleware.include_tag, get_tag_response, response.content
         )
         return response
+# }}}
+
+# dtt_url # {{{
+def dtt_url(reg, template, name=None):
+    return url(reg, direct_to_template, { 'template': template }, name=name)
 # }}}
