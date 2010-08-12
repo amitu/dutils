@@ -1443,10 +1443,9 @@ def make_choices(s):
 # future_it helper # {{{
 def future_it(name, handler, due_on, *args, **kw):
     from dutils.futures.models import Future
-    return Future.objects.schedule(name, handler, due_on, *args, **kw)
+    return Future.objects.schedule(name, handler, due_on, *args, **kw).log("Created")
 # }}}
 
 def global_lock(lock_name):
     def decorated(fun):
         pass
-        

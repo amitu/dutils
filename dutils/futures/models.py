@@ -101,7 +101,7 @@ class Future(models.Model):
             return Future.objects.create(
                 due_on=due_on, fire_on=due_on, handler=handler,
                 priority=priority, allowed_time=allowed_time, name=name,
-                max_tries=max_tries, parms=params,
+                max_tries=max_tries, params=params,
             )
     # }}}
 
