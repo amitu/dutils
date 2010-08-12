@@ -73,10 +73,11 @@ class Future(models.Model):
             # TODO: use some kind of locking mechanism or transaction
             try:
                 # TODO: handle includes and excludes
-                future = self.overdue().not_issued().by_oldest()[0]
+                future = self.overdue().notdone().by_oldest()[0]
             except IndexError:
                 raise Future.DoesNotExist
             future.mark_issued()
+            return future
 
         def fire_next(self, includes=None, excludes=None):
             # the core function
@@ -117,7 +118,12 @@ class Future(models.Model):
 
     @property
     def kw(self): 
-        return simplejson.loads(self.params)["kw"]
+        return dict(
+            [
+                (str(k), v)
+                for k, v in simplejson.loads(self.params)["kw"].items()
+            ]
+        )
 
     def log(self, msg, save=True):
         self.error_log = "%s: %s\n%s" % (datetime.now(), msg, self.error_log)
