@@ -10,29 +10,60 @@ from dutils import utils
 class Future(models.Model):
     due_on = models.DateTimeField(default=datetime.now)
     name = models.CharField(
-        max_length=50, help_text="A name to identify tasks of this kind"
+        max_length=50, help_text="A name to identify tasks of this kind."
     )
     handler = models.CharField(
         max_length=100,
-        help_text="Dotted notation to a callable that will handle this task"
+        help_text="Dotted notation to a callable that will handle this task."
     )
     priority = models.IntegerField(
         default=0, help_text="Tasks with higher priority are given preference."
     )
     params = models.TextField(
-        blank=True, help_text="Arbitrary data, to be used by caller"
+        blank=True, help_text="Arbitrary data, to be used by caller."
     )
     allowed_time = models.IntegerField(
         default=300, 
         help_text="""
+
             Number of seconds should this task be allowed to take before it should
-            be considered dead
+            be considered dead.
+
         """
     )
 
-    fire_on = models.DateTimeField(blank=True, null=True) # main field
-    issued_on = models.DateTimeField(blank=True, null=True) # a task is allowed 
-    finished_on = models.DateTimeField(blank=True, null=True)
+    fire_on = models.DateTimeField( # main field
+        blank=True, null=True, help_text="""
+
+            A task can fail, and multiple retries might be allowed. In case of
+            failure, tasks are fired again, and this is the time when the task
+            will be actually fired next. It may be later than the due_on above.
+
+        """
+
+    )
+
+    issued_on = models.DateTimeField(
+        blank=True, null=True, help_text="""
+
+            A task can take time to run exectute. And there could be multiple
+            task servers. In case a task is being run by one task server, we do
+            not want to start another instance of task. We also dont want to
+            wait for a task indefinitely. For this we need to record when a
+            task was issued and thus started on one of the task servers. 
+
+        """
+    )
+
+    finished_on = models.DateTimeField(
+        blank=True, null=True, help_text="""
+
+            This is when the task "ended". This could be on successful
+            completion, on error, or if its cancelled. The actual status is
+            stored in status field below.
+
+        """
+    )
 
     tries = models.IntegerField(default=0)
     max_tries = models.IntegerField(default=1)

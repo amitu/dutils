@@ -31,6 +31,8 @@ Table of Contents
    yahoo_contacts
    form_handler
    paginator
+   futures
+   whatsup
    dutils_tags
    kvds
    kvds_server

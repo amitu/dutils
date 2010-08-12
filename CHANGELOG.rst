@@ -1,7 +1,3 @@
-Install latest development version to get these features::
-
-    sudo easy_install -U http://github.com/amitu/dutils/tarball/master
-
 New in Development
 ==================
 
@@ -11,6 +7,13 @@ New in Development
 * `dutils.whatsup` now has a feed. It honors the perms.
 * Added search to `dutils.whatsup`.
 * Fixed a bug in {% clevercss %} tag implementation.
+* Added `dutils.futures` app. For scheduling tasks in future.
+
+.. note::
+
+    Install latest development version to get new features::
+
+        sudo easy_install -U http://github.com/amitu/dutils/tarball/master
 
 New in 0.0.10
 =============
