@@ -96,10 +96,12 @@ class Future(models.Model):
         def schedule(self, name, handler, due_on, *args, **kw):
             max_tries = kw.pop("max_tries", 1)
             priority = kw.pop("priority", 0)
+            allowed_time = kw.pop("allowed_time", 300)
             params = utils.dump_json(args=args, kw=kw)
             return Future.objects.create(
                 due_on=due_on, fire_on=due_on, handler=handler,
-                name=name, priority=priority, max_tries=max_tries, parms=params
+                priority=priority, allowed_time=allowed_time, name=name,
+                max_tries=max_tries, parms=params,
             )
     # }}}
 
