@@ -4,13 +4,12 @@ from django.template.defaultfilters import stringfilter
 from django.utils.encoding import force_unicode
 from django.utils.functional import allow_lazy
 from django.conf import settings
-from django.utils.safestring import mark_safe
 from django.core.urlresolvers import get_mod_func
 from django.contrib.flatpages.models import FlatPage
 
-import time, urllib2, os, hashlib
+import time, hashlib
 
-from dutils.utils import logger, batch_gen1
+from dutils.utils import batch_gen1
 from dutils.kvds import utils as kvds_utils
 # }}}
 
@@ -145,11 +144,11 @@ def render_flatpage(url):
         return ""
 # }}} 
 
-# kvds_flatpage # {{{ 
+# kvds_flatpage # {{{
 @register.simple_tag
 def kvds_flatpage(key):
     return kvds_utils.kvds(key=key).get(key, "")
-# }}} 
+# }}}
 
 # gravatar # {{{
 @register.filter

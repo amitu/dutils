@@ -54,14 +54,14 @@ for dirpath, dirnames, filenames in os.walk(dutils_dir):
 
 import dutils
 
-from distutils.command.install import INSTALL_SCHEMES 
 for scheme in INSTALL_SCHEMES.values():
         scheme['data'] = scheme['purelib']
+
 setup(
     name="dutils",
     version=dutils.VERSION,
-    description="Useful dutils utilities",
-    long_description="""Reusable dutils utilities.
+    description="Useful django utilities",
+    long_description="""Reusable Django Utilities.
 
 Documentation: http://packages.python.org/dutils/
     """,

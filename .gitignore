@@ -3,6 +3,7 @@
 *.swp
 *.log
 db.sqlite
+MANIFEST
 local_settings.py
 .DS_Store
 dist

@@ -1,0 +1,2 @@
+http://celeryq.org/docs/getting-started/
+http://code.google.com/p/django-compress/

@@ -182,6 +182,14 @@ class RequestForm(forms.Form):
         if field: self.fields[field].initial = value
         for k, v in kw.items():
             self.fields[k].initial = v
+        return self
+
+    def initialize_with_object(self, obj, *fields, **kw):
+        for field in fields:
+            self.fields[field].initial = getattr(obj, field)
+        for ffield,ofield in kw.items():
+            self.fields[ffield].initial = getattr(obj, ofield)
+        return self
 
     def update_object(self, obj, *args, **kw):
         d = self.cleaned_data.get
@@ -306,6 +314,8 @@ def formatExceptionInfo(level = 6):
         s += "\n" + i
     return s
 # }}} 
+
+format_exception = formatExceptionInfo
 
 # S3 Photo Storeage # {{{
 def delete_jpg(key):
@@ -1166,7 +1176,7 @@ def get_fb_access_token_from_request(request, redirect_uri):
 
 # JSResponse # {{{ 
 class JSResponse(HttpResponse):
-    def __init__(self, data):
+    def __init__(self, script):
         HttpResponse.__init__(
             self, content="""
 <html>
@@ -1174,7 +1184,7 @@ class JSResponse(HttpResponse):
         <script type="text/javascript">%s</script>
     </head>
 </html>
-            """ % data, mimetype="text/html",
+            """ % script, mimetype="text/html",
         ) 
 # }}} 
 
@@ -1418,3 +1428,18 @@ class NginxSSIMiddleware(object):
 def dtt_url(reg, template, name=None):
     return url(reg, direct_to_template, { 'template': template }, name=name)
 # }}}
+
+# make_choices # {{{
+def make_choices(s):
+    """takes comma separated string, and converts it to choices"""
+    choices = []
+    for p in s.split(","):
+        p = p.strip()
+        choices.append((p, p))
+    return choices
+# }}}
+
+def global_lock(lock_name):
+    def decorated(fun):
+        pass
+        

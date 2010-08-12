@@ -1,7 +1,5 @@
 # got it from: http://www.djangosnippets.org/snippets/73/
 from django import template
-import cgi, urllib
-
 register = template.Library()
 
 import dutils
