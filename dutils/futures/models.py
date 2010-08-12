@@ -4,6 +4,7 @@ from django.utils import simplejson
 from django.core.urlresolvers import get_mod_func
 
 from datetime import datetime, timedelta
+from copy import deepcopy
 
 from dutils import utils
 
@@ -78,6 +79,9 @@ class Future(models.Model):
 
     objects = utils.QuerySetManager()
 
+    def __unicode__(self): 
+        return "%(name)s(%(id)s) - %(fire_on)s (%(status)s)" % self.__dict__
+
     # QuerySet # {{{
     class QuerySet(DjangoQuerySet):
 
@@ -90,6 +94,12 @@ class Future(models.Model):
         def issued(self):
             return self.filter(status="issued")
 
+        def errored(self):
+            return self.filter(status="errored")
+
+        def cancelled(self):
+            return self.filter(status="cancelled")
+
         def overdue(self):
             return self.notdone().filter(fire_on__lte=datetime.now())
 
@@ -99,22 +109,35 @@ class Future(models.Model):
         def by_priority(self):
             return self.order_by("-priority")
 
-        def get_next(self, includes=None, excludes=None):
+        def with_includes_excludes(self, includes=None, excludes=None):
+            return self # TODO
+
+        def copy(self): return deepcopy(self)
+
+        def print_status(self):
+            print "Number of tasks:", self.count()
+            print "Number of done tasks:", self.copy().done().count()
+            print "Number of notdone tasks:", self.copy().notdone().count()
+            print "Number of issued tasks:", self.copy().issued().count()
+            print "Number of overdue tasks:", self.copy().overdue().count()
+            print "Number of errored tasks:", self.copy().errored().count()
+            print "Number of cancelled tasks:", self.copy().cancelled().count()
+
+        def get_next(self):
             # oldest overdue
             # TODO: use some kind of locking mechanism or transaction
             try:
-                # TODO: handle includes and excludes
                 future = self.overdue().notdone().by_oldest()[0]
             except IndexError:
                 raise Future.DoesNotExist
             future.mark_issued()
             return future
 
-        def fire_next(self, includes=None, excludes=None):
+        def fire_next(self):
             # the core function
             # this shud take care of state management and exception handling
             try:
-                future = self.get_next(includes, excludes) # marks it as issued too
+                future = self.get_next() # marks it as issued too
             except Future.DoesNotExist:
                 return False # false means no tasks found, and looper shud sleep
             try:
