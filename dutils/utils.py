@@ -447,8 +447,7 @@ charset='utf-8'
 email.Charset.add_charset(charset, email.Charset.SHORTEST, None, None)
 
 # send_html_mail = messenger.send_html_mail
-@threaded_task
-def send_html_mail(
+def send_html_mail_nt(
     subject, sender=settings.DEFAULT_FROM_EMAIL, recip="", context=None, 
     html_template="", text_template="", sender_name="",
     html_content="", text_content="", recip_list=None, sender_formatted=""
@@ -512,6 +511,8 @@ def send_html_mail(
         except Exception, e: print e
 
     server.quit()
+
+send_html_mail = threaded_task(send_html_mail_nt)
 
 def render(context, template):
     from django.template import loader, Context

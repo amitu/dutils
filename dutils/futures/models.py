@@ -39,7 +39,7 @@ class Future(models.Model):
 
     status = models.CharField(
         max_length=20, default="notdone",
-        choices=utils.make_choices("notdone, issued, errored, done"),
+        choices=utils.make_choices("notdone, issued, errored, done, cancelled"),
     )
 
     error_log = models.TextField(blank=True)
@@ -159,10 +159,22 @@ class Future(models.Model):
         self.save()
         return self
 
+    # TODO: handle locking
+    def cancel_it(self, reason=""):
+        self.status = "cancelled"
+        self.finished_on = datetime.now()
+        self.log("Cancelled, reason=%s" % reason, save=False)
+        self.save()
+        return self
+
     def fire(self):
+        self.log("Firing")
         if getattr(self.handler_object, "raw_handler", False):
-            return self.handler_object(self)
-        return self.handler_object(*self.args, **self.kw)
+            self.log("Handler is raw")
+            ret = self.handler_object(self)
+        ret = self.handler_object(*self.args, **self.kw)
+        self.log("Handler done, returned: %s" % ret)
+        return ret
     # }}}
 
 
