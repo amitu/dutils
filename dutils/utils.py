@@ -1441,9 +1441,15 @@ def make_choices(s):
 # }}}
 
 # future_it helper # {{{
-def future_it(name, handler, due_on, *args, **kw):
+def future_it(name, handler, due_on=None, origin="", *args, **kw):
     from dutils.futures.models import Future
-    return Future.objects.schedule(name, handler, due_on, *args, **kw).log("Created")
+    if not due_on: due_on = datetime.now()
+    future = Future.objects.schedule(name, handler, due_on, *args, **kw)
+    if origin:
+        future.log("Created: %s" % origin)
+    else:
+        future.log("Created")
+    return future
 # }}}
 
 def global_lock(lock_name):
