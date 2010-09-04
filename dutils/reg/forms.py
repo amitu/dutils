@@ -3,6 +3,7 @@ from django import forms
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from django.contrib.auth.forms import PasswordChangeForm as DPCF
 
 from dutils.utils import RequestForm, log_user_in
 # }}} 
@@ -61,4 +62,17 @@ class LoginForm(RequestForm):
         log_user_in(self.user_cache, self.request)
         return "/"
 # }}}
+
+class PasswordChangeForm(DPCF):
+    old_password = forms.CharField(
+        label=_("Old password"), widget=forms.PasswordInput,
+    )
+    new_password1 = forms.CharField(
+        label=_("New password"), widget=forms.PasswordInput, min_length=8
+    )
+    new_password2 = forms.CharField(
+        label=_("New password confirmation"), widget=forms.PasswordInput,
+        min_length=8
+    )
+
 
