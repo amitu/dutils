@@ -522,6 +522,7 @@ def render(context, template):
     return context
 # }}}
 
+# send_mail # {{{
 def send_mail(
     subject, message, from_email, recipient_list, fail_silently=False,
     auth_user=None, auth_password=None, connection=None
@@ -530,6 +531,7 @@ def send_mail(
         subject, sender=from_email, html_content="<pre>%s</pre>" % message,
         recip_list=recipient_list
     )
+# }}}
 
 if getattr(settings, "DUTILS_MONKEY_PATCH_SEND_MAIL", False):
     from django.core import mail
@@ -1455,3 +1457,22 @@ def future_it(name, handler, due_on=None, origin="", *args, **kw):
 def global_lock(lock_name):
     def decorated(fun):
         pass
+
+# ContactForm # {{{
+class ContactForm(dutils.RequestForm):
+    name = forms.CharField(max_length=100)
+    email = forms.EmailField()
+    message = forms.CharField(widget=forms.Textarea)
+
+    def save(self):
+        d = self.cleaned_data.get
+        mail.mail_managers(
+            "new contact message", 
+            """
+                name:    %(name)s
+                email:   %(email)s
+                message: %(message)s
+            """ % self.cleaned_data,
+        )
+        return "/contact-us/done/"
+# }}}
