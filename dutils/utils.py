@@ -19,6 +19,7 @@ from django.db.models.query import QuerySet
 from django.contrib.auth.models import User, SiteProfileNotAvailable
 from django.db import models
 from django.core.urlresolvers import get_urlconf, get_resolver, Resolver404
+from django.core import mail
 
 import time, random, re, os, sys, traceback, socket
 from hashlib import md5
@@ -534,8 +535,9 @@ def send_mail(
 # }}}
 
 if getattr(settings, "DUTILS_MONKEY_PATCH_SEND_MAIL", False):
-    from django.core import mail
+    # you would want to do this if you want all mails to be threaded
     mail.send_mail = send_mail
+    # TODO: monkey patch other functions too
 
 # IndianMobileField # {{{
 class IndianMobileField(forms.CharField):
