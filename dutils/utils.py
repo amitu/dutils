@@ -1461,7 +1461,7 @@ def global_lock(lock_name):
         pass
 
 # ContactForm # {{{
-class ContactForm(dutils.RequestForm):
+class ContactForm(RequestForm):
     name = forms.CharField(max_length=100)
     email = forms.EmailField()
     message = forms.CharField(widget=forms.Textarea)
