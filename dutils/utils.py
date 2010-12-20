@@ -61,7 +61,7 @@ def create_logger(name=None, level=logging.DEBUG):
     logger.setLevel(level)
     return logger
 
-logger = create_logger()
+if hasattr(settings, "APP_DIR"): logger = create_logger()
 
 class PrintLogger(object): 
     def __init__(self, old_out):
