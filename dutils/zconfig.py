@@ -25,8 +25,10 @@ class ZConfigServer(ZReplier):
             if key in self.db: data = self.db[key]
             return data
         elif message == "dump":
+            print "dump"
             return str(dict(self.db))
         else:
+            print "joogi"
             return "Joogi"
 
 query = query_maker(bind=ZCONFIG_LOCATION)
