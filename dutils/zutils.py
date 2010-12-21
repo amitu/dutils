@@ -10,27 +10,34 @@ class ZReplier(threading.Thread):
             self.daemon = True
             self.bind = bind
 
-        def run(self):
+        def thread_init(self):
+            self.socket = CONTEXT.socket(zmq.REP)
+            self.socket.bind(self.bind)
+            self.socket.bind("inproc://%s" % self.__class__.__name__)
 
-            socket = CONTEXT.socket(zmq.REP)
-            socket.bind(self.bind)
-            socket.bind("inproc://%s" % self.__class__.__name__)
+        def thread_quit(self):
+            self.socket.close()
+
+        def run(self):
+            self.thread_init()
 
             print self.__class__.__name__, "listening on", self.bind
 
             while True:
-                message = socket.recv()
+                message = self.socket.recv()
 
                 if message == "shutdown":
-                    socket.send("shutting down")
-                    socket.close()
+                    self.socket.send("shutting down")
+                    self.socket.close()
                     self.shutdown_event.set()
                     break
 
                 try:
-                    socket.send(self.reply(message))
+                    self.socket.send(self.reply(message))
                 except Exception, e:
-                    socket.send("exception: %s" % e)
+                    self.socket.send("exception: %s" % e)
+
+            self.thread_quit()
 
         def shutdown(self):
             socket = CONTEXT.socket(zmq.REQ)
