@@ -19,9 +19,10 @@ class ZConfigServer(ZReplier):
             self.db.sync()
             return "written, thanks"
         elif message.startswith("read"):
+            print "read"
             key = message.split(":", 1)[1]
             data = "NA"
-            if key in self.db: self.db[key]
+            if key in self.db: data = self.db[key]
             return data
         elif message == "dump":
             return str(dict(self.db))
