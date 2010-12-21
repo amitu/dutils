@@ -1,9 +1,8 @@
 from optparse import OptionParser
-from zutils import ZReplier, CONTEXT
-import zmq, bsddb, os
+from zutils import ZReplier, query_maker
+import bsddb, os
 
-SERVER_BIND = "tcp://0.0.0.0:5559"
-CLIENT_BIND = os.environ.get("ZCONFIG_LOCATION", "tcp://localhost:5559")
+ZCONFIG_LOCATION = os.environ.get("ZCONFIG_LOCATION", "tcp://127.0.0.1:5559")
 
 class ZConfigServer(ZReplier):
 
@@ -29,20 +28,7 @@ class ZConfigServer(ZReplier):
         else:
             return "Joogi"
 
-def query(socket, cmd):
-    socket.send(cmd)
-    return socket.recv()
-
-def query_maker(socket=None, bind=CLIENT_BIND):
-
-    if not socket:
-        socket = CONTEXT.socket(zmq.REQ)
-        socket.connect(bind)
-
-    def wrapper(cmd):
-        return query(socket, cmd)
-
-    return wrapper
+query = query_maker(bind=ZCONFIG_LOCATION)
 
 def main():
     parser = OptionParser()
@@ -52,7 +38,7 @@ def main():
     )
     (options, args) = parser.parse_args()
 
-    if not args: args = (SERVER_BIND,)
+    if not args: args = (ZCONFIG_LOCATION,)
 
     zconfig_server = ZConfigServer(args[0], options.config_file)
     zconfig_server.loop()

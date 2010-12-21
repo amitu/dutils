@@ -59,3 +59,16 @@ class ZReplier(threading.Thread):
                 self.shutdown()
                 self.join()
                 print "done."
+
+def query_maker(socket=None, bind=None):
+    if not socket:
+        assert bind
+        socket = CONTEXT.socket(zmq.REQ)
+        socket.connect(bind)
+
+    def query(cmd):
+        socket.send(cmd)
+        return socket.recv()
+
+    return query
+
