@@ -34,7 +34,7 @@ class ZReplier(threading.Thread):
         def run(self):
             self.thread_init()
 
-            print self.__class__.__name__, "listening on", self.bind
+            print self.__class__.__name__, "listening on %s." % self.bind
 
             while True:
                 parts = recv_multi(self.socket)

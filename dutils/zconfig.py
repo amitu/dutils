@@ -10,17 +10,18 @@ class ZConfigServer(ZReplier):
         super(ZConfigServer, self).__init__(bind)
 
         self.db = bsddb.hashopen(zfile)
+        print "Loading %s with %s records." % (zfile, len(self.db))
 
     def reply(self, message):
         if message.startswith("write"):
-            print "write",
+            print "write:",
             cmd, key, val = message.split(":", 2)
             print key
             self.db[key] = val
             self.db.sync()
             return "written, thanks"
         elif message.startswith("read"):
-            print "read",
+            print "read:",
             key = message.split(":", 1)[1]
             print key
             data = "NA"
@@ -43,10 +44,7 @@ def main():
     )
     (options, args) = parser.parse_args()
 
-    if not args: args = (ZCONFIG_LOCATION,)
-
-    zconfig_server = ZConfigServer(args[0], options.config_file)
-    zconfig_server.loop()
+    ZConfigServer(args[0] if args else ZCONFIG_LOCATION, options.config_file).loop()
 
 if __name__ == "__main__":
     main()
