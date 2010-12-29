@@ -2,6 +2,20 @@ import zmq, threading, time
 
 CONTEXT = zmq.Context()
 
+def recv_multi(sock):
+    parts = []
+    while True:
+        parts.append(sock.recv())
+        if not sock.getsockopt(zmq.RCVMORE): break
+    return parts
+
+def send_multi(sock, parts, reply=None):
+    if reply:
+        parts[-1] = reply
+    for part in parts[:-1]:
+        sock.send(part, zmq.SNDMORE)
+    sock.send(parts[-1], 0)
+
 class ZReplier(threading.Thread):
 
         def __init__(self, bind):
@@ -11,9 +25,8 @@ class ZReplier(threading.Thread):
             self.bind = bind
 
         def thread_init(self):
-            self.socket = CONTEXT.socket(zmq.REP)
+            self.socket = CONTEXT.socket(zmq.XREP)
             self.socket.bind(self.bind)
-            self.socket.bind("inproc://%s" % self.__class__.__name__)
 
         def thread_quit(self):
             self.socket.close()
@@ -24,27 +37,32 @@ class ZReplier(threading.Thread):
             print self.__class__.__name__, "listening on", self.bind
 
             while True:
-                message = self.socket.recv()
+                parts = recv_multi(self.socket)
+
+                assert len(parts) == 3
+
+                message = parts[2]
 
                 if message == "shutdown":
-                    self.socket.send("shutting down")
+                    send_multi(self.socket, parts, "shutting down")
                     self.socket.close()
                     self.shutdown_event.set()
                     break
 
                 try:
-                    self.socket.send(self.reply(message))
+                    send_multi(self.socket, parts, self.reply(message))
                 except Exception, e:
-                    self.socket.send("exception: %s" % e)
+                    send_multi(self.socket, parts, "exception: %s" % e)
 
             self.thread_quit()
 
         def shutdown(self):
             socket = CONTEXT.socket(zmq.REQ)
-            socket.connect("inproc://%s" % self.__class__.__name__)
+            socket.connect(self.bind)
 
             socket.send("shutdown")
-            socket.recv()
+            recv_multi(socket)
+            socket.close()
 
         def loop(self):
             self.start()

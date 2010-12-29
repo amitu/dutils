@@ -3,7 +3,7 @@ from zutils import ZReplier, query_maker
 import bsddb, os
 
 ZCONFIG_LOCATION = os.environ.get("ZCONFIG_LOCATION", "tcp://127.0.0.1:5559")
-
+#{{{#}}}
 class ZConfigServer(ZReplier):
 
     def __init__(self, bind, zfile):
@@ -13,14 +13,16 @@ class ZConfigServer(ZReplier):
 
     def reply(self, message):
         if message.startswith("write"):
-            print "write"
+            print "write",
             cmd, key, val = message.split(":", 2)
+            print key
             self.db[key] = val
             self.db.sync()
             return "written, thanks"
         elif message.startswith("read"):
-            print "read"
+            print "read",
             key = message.split(":", 1)[1]
+            print key
             data = "NA"
             if key in self.db: data = self.db[key]
             return data
@@ -28,7 +30,7 @@ class ZConfigServer(ZReplier):
             print "dump"
             return str(dict(self.db))
         else:
-            print "joogi"
+            print "joogi:", message
             return "Joogi"
 
 query = query_maker(bind=ZCONFIG_LOCATION)
