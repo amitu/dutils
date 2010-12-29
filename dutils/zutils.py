@@ -39,7 +39,7 @@ class ZReplier(threading.Thread):
             while True:
                 parts = recv_multi(self.socket)
 
-                assert len(parts) == 3
+                assert len(parts) == 3, "Expected 3 parts, got %s: %s" % (len(parts), parts)
 
                 message = parts[2]
 
@@ -82,10 +82,13 @@ def query_maker(socket=None, bind=None):
     if not socket:
         assert bind
         socket = CONTEXT.socket(zmq.REQ)
+        #socket = CONTEXT.socket(zmq.XREQ)
         socket.connect(bind)
 
     def query(cmd):
+        #socket.send(zmq.Message(None), zmq.SNDMORE)
         socket.send(cmd)
+        #socket.recv()
         return socket.recv()
 
     return query
