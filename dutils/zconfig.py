@@ -35,36 +35,31 @@ class ZConfigServer(ZReplier):
 
     def reply(self, message):
         if message.startswith("write"):
-            print time.asctime(), "write:",
             cmd, key, val = message.split(":", 2)
-            print key
+            self.log("write: %s" % key)
             self.db[key] = val
             self.db.sync()
             self.publisher_port.send("%s:%s" % (key, val))
             return "written, thanks"
         elif message.startswith("del"):
-            print time.asctime(), "del:",
             key = message.split(":", 1)[1]
-            print key
+            self.log("del: %s" % key)
             if key in self.db: 
                 del self.db[key]
                 self.db.sync()
                 return "deleted"
             return "not found"
         elif message.startswith("read"):
-            print time.asctime(), "read:",
             key = message.split(":", 1)[1]
-            print key
+            self.log("read: %s" % key)
             data = "NA"
             if key in self.db: data = self.db[key]
             return data
         elif message == "dump":
             from django.utils import simplejson
-            print time.asctime(), "dump"
+            self.log("dump")
             return simplejson.dumps(dict(self.db))
-        else:
-            print time.asctime(), "joogi:", message
-            return "Joogi"
+        return super(ZConfigServer, self).reply(message)
 
     def thread_quit(self):
         super(ZConfigServer, self).thread_quit()

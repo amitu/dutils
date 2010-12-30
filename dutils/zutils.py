@@ -16,6 +16,8 @@ def send_multi(sock, parts, reply=None):
         sock.send(part, zmq.SNDMORE)
     sock.send(parts[-1], 0)
 
+class NoReply(Exception): pass
+
 class ZReplier(threading.Thread):
 
         def __init__(self, bind):
@@ -23,6 +25,12 @@ class ZReplier(threading.Thread):
             self.shutdown_event = threading.Event()
             self.daemon = True
             self.bind = bind
+            self.stats = {}
+            self.stats["started_on"] = time.time()
+            self.stats["requests"] = 0
+
+        def log(self, message):
+            print "[%s] %s" % (time.asctime(), message)
 
         def thread_init(self):
             self.socket = CONTEXT.socket(zmq.XREP)
@@ -36,27 +44,42 @@ class ZReplier(threading.Thread):
         def thread_quit(self):
             self.socket.close()
 
+        def reply(self, message):
+            if message == "shutdown":
+                self.shutdown_event.set()
+                self.log("shutdown")
+                return "shutting down"
+            if message == "status":
+                self.log("status")
+                return self.stats
+            raise NoReply
+
         def run(self):
             self.thread_init()
 
             print self.__class__.__name__, "listening on %s." % self.bind
 
-            while True:
+            while not self.shutdown_event.isSet():
                 parts = recv_multi(self.socket)
 
-                assert len(parts) == 3, "Expected 3 parts, got %s: %s" % (len(parts), parts)
+                self.stats["requests"] += 1
+
+                if len(parts) != 3:
+                    self.log(
+                        "Expected 3 parts, got %s: %s" % (len(parts), parts)
+                    )
+                    send_multi(self.socket, parts, "BAD MESSAGE")
+                    continue
 
                 message = parts[2]
 
-                if message == "shutdown":
-                    send_multi(self.socket, parts, "shutting down")
-                    self.socket.close()
-                    self.shutdown_event.set()
-                    break
-
                 try:
                     send_multi(self.socket, parts, self.reply(message))
+                except NoReply:
+                    self.log("NoReply for:" % message)
+                    send_multi(self.socket, parts, "Unknown Command")
                 except Exception, e:
+                    self.log("Exception %s for: %s" % (e, message))
                     send_multi(self.socket, parts, "exception: %s" % e)
 
             self.thread_quit()
@@ -78,10 +101,10 @@ class ZReplier(threading.Thread):
                         print "Terminating after remote signal."
                         break
             except KeyboardInterrupt:
-                print "Terminating gracefully... ",
+                print "Terminating gracefully... "
                 self.shutdown()
                 self.join()
-                print "done."
+                print "Terminated."
 
 def query_maker(socket=None, bind=None):
     if not socket:
