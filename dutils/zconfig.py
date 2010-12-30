@@ -37,6 +37,7 @@ class ZConfigServer(ZReplier):
         if message.startswith("write"):
             cmd, key, val = message.split(":", 2)
             self.log("write: %s" % key)
+            self.increment_stats_counter("write")
             self.db[key] = val
             self.db.sync()
             self.publisher_port.send("%s:%s" % (key, val))
@@ -44,6 +45,7 @@ class ZConfigServer(ZReplier):
         elif message.startswith("del"):
             key = message.split(":", 1)[1]
             self.log("del: %s" % key)
+            self.increment_stats_counter("del")
             if key in self.db: 
                 del self.db[key]
                 self.db.sync()
@@ -52,12 +54,14 @@ class ZConfigServer(ZReplier):
         elif message.startswith("read"):
             key = message.split(":", 1)[1]
             self.log("read: %s" % key)
+            self.increment_stats_counter("read")
             data = "NA"
             if key in self.db: data = self.db[key]
             return data
         elif message == "dump":
             from django.utils import simplejson
             self.log("dump")
+            self.increment_stats_counter("dump")
             return simplejson.dumps(dict(self.db))
         return super(ZConfigServer, self).reply(message)
 
@@ -124,8 +128,10 @@ def main():
         watch()
         return
 
-    if args and args[0] == "uptime":
-        print query("stats")
+    if args and args[0] == "stats":
+        from django.utils import simplejson
+        for k, v in simplejson.loads(query("stats")).items():
+            print "%s: %s" % (k, v)
         return
 
     if len(args) != 0:

@@ -27,7 +27,6 @@ class ZReplier(threading.Thread):
             self.bind = bind
             self.stats = {}
             self.stats["started_on"] = time.asctime()
-            self.stats["requests"] = 0
 
         def log(self, message):
             print "[%s] %s" % (time.asctime(), message)
@@ -48,12 +47,20 @@ class ZReplier(threading.Thread):
             if message == "shutdown":
                 self.shutdown_event.set()
                 self.log("shutdown")
+                self.increment_stats_counter("shutdown")
                 return "shutting down"
             if message == "stats":
                 from django.utils import simplejson
                 self.log("stats")
+                self.increment_stats_counter("stats")
                 return simplejson.dumps(self.stats)
+            self.increment_stats_counter("no_reply")
             raise NoReply
+
+        def increment_stats_counter(self, counter_name):
+            if counter_name not in self.stats:
+                self.stats[counter_name] = 0
+            self.stats[counter_name] += 1
 
         def run(self):
             self.thread_init()
@@ -63,7 +70,7 @@ class ZReplier(threading.Thread):
             while not self.shutdown_event.isSet():
                 parts = recv_multi(self.socket)
 
-                self.stats["requests"] += 1
+                self.increment_stats_counter("requests")
 
                 if len(parts) != 3:
                     self.log(
