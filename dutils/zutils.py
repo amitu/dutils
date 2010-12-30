@@ -34,9 +34,10 @@ class ZReplier(threading.Thread):
         def thread_init(self):
             self.socket = CONTEXT.socket(zmq.XREP)
             try:
+                print self.bind
                 self.socket.bind(self.bind)
             except zmq.ZMQError, e:
-                print e
+                print e, "while binding on", self.bind
                 self.shutdown_event.set()
                 raise
 
