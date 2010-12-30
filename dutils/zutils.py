@@ -1,6 +1,7 @@
 import zmq, threading, time
 
 CONTEXT = zmq.Context()
+ZNull = zmq.Message(None)
 
 def recv_multi(sock):
     parts = []
@@ -68,6 +69,8 @@ class ZReplier(threading.Thread):
 
             print self.__class__.__name__, "listening on %s." % self.bind
 
+            xreply_mode = hasattr(self, "xreply")
+
             while not self.shutdown_event.isSet():
                 parts = recv_multi(self.socket)
 
@@ -83,13 +86,17 @@ class ZReplier(threading.Thread):
                 message = parts[2]
 
                 try:
-                    send_multi(self.socket, parts, self.reply(message))
+                    if xreply_mode:
+                        self.xreply(parts[0], message)
+                    else:
+                        send_multi(self.socket, parts, self.reply(message))
                 except NoReply:
                     self.log("NoReply for: %s" % message)
                     send_multi(self.socket, parts, "Unknown command.")
                 except Exception, e:
                     self.log("Exception %s for: %s" % (e, message))
                     send_multi(self.socket, parts, "exception: %s" % e)
+                    raise
 
             self.thread_quit()
 
@@ -123,7 +130,7 @@ def query_maker(socket=None, bind=None):
         socket.connect(bind)
 
     def query(cmd):
-        #socket.send(zmq.Message(None), zmq.SNDMORE)
+        #socket.send(ZNull, zmq.SNDMORE)
         socket.send(cmd)
         #socket.recv()
         return socket.recv()
