@@ -26,7 +26,7 @@ class ZReplier(threading.Thread):
             self.daemon = True
             self.bind = bind
             self.stats = {}
-            self.stats["started_on"] = time.time()
+            self.stats["started_on"] = time.asctime()
             self.stats["requests"] = 0
 
         def log(self, message):
@@ -49,9 +49,10 @@ class ZReplier(threading.Thread):
                 self.shutdown_event.set()
                 self.log("shutdown")
                 return "shutting down"
-            if message == "status":
-                self.log("status")
-                return self.stats
+            if message == "stats":
+                from django.utils import simplejson
+                self.log("stats")
+                return simplejson.dumps(self.stats)
             raise NoReply
 
         def run(self):
@@ -76,8 +77,8 @@ class ZReplier(threading.Thread):
                 try:
                     send_multi(self.socket, parts, self.reply(message))
                 except NoReply:
-                    self.log("NoReply for:" % message)
-                    send_multi(self.socket, parts, "Unknown Command")
+                    self.log("NoReply for: %s" % message)
+                    send_multi(self.socket, parts, "Unknown command.")
                 except Exception, e:
                     self.log("Exception %s for: %s" % (e, message))
                     send_multi(self.socket, parts, "exception: %s" % e)

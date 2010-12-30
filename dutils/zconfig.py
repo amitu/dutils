@@ -124,6 +124,10 @@ def main():
         watch()
         return
 
+    if args and args[0] == "uptime":
+        print query("stats")
+        return
+
     if len(args) != 0:
         print "Bad argument passed: %s" % " ".join(args)
         return
