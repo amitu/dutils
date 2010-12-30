@@ -26,7 +26,12 @@ class ZReplier(threading.Thread):
 
         def thread_init(self):
             self.socket = CONTEXT.socket(zmq.XREP)
-            self.socket.bind(self.bind)
+            try:
+                self.socket.bind(self.bind)
+            except zmq.ZMQError, e:
+                print e
+                self.shutdown_event.set()
+                raise
 
         def thread_quit(self):
             self.socket.close()
@@ -70,7 +75,7 @@ class ZReplier(threading.Thread):
                 while True:
                     time.sleep(1)
                     if self.shutdown_event.isSet():
-                        print "Terminating after remote signal"
+                        print "Terminating after remote signal."
                         break
             except KeyboardInterrupt:
                 print "Terminating gracefully... ",

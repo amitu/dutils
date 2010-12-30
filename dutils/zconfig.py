@@ -73,6 +73,7 @@ class ZConfigServer(ZReplier):
 
 query = query_maker(bind=ZCONFIG_LOCATION)
 
+# watch for changes # {{{
 def printer(key, value):
     print "%s: %s" % (key, value)
 
@@ -83,7 +84,9 @@ def watch(callback=printer):
     while True:
         k, v = socket.recv().split(":", 1)
         callback(k, v)
+# }}}
 
+# command line handling # {{{
 def main():
     parser = OptionParser()
     parser.add_option(
@@ -106,13 +109,34 @@ def main():
         print query("dump")
         return
 
+    if args and (args[0] == "list" or args[0] == "ls"):
+        from django.utils import simplejson
+        d = simplejson.loads(query("dump"))
+        keys = d.keys()
+        keys.sort()
+        f = ""
+        if len(args) > 1: f = args[1]
+        for k in keys:
+            if f not in k: continue
+            print "%s: %s" % (k, d[k])
+        return
+
     if args and args[0] == "write":
         print query("write:%s:%s" % (args[1], args[2]))
+        return
+
+    if args and args[0] == "watch":
+        watch()
+        return
+
+    if len(args) != 0:
+        print "Bad argument passed: %s" % " ".join(args)
         return
 
     ZConfigServer(
         args[0] if args else ZCONFIG_LOCATION, options.config_file
     ).loop()
+# }}}
 
 if __name__ == "__main__":
     main()
