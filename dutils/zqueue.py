@@ -9,16 +9,56 @@ class BDBPersistentQueue(object):
     def __init__(self, db, namespace):
         self.db = db
         self.namespace = namespace
+        if not self.has_key("top"): self.set("top", 0)
+        if not self.has_key("bottom"): self.set("bottom", 0)
+        if not self.has_key("seen"): self.set("seen", 0)
+
+    def get_top(self): return int(self.get("top"))
+    def set_top(self, v): self.set("top", str(v))
+    def get_bottom(self): return int(self.get("bottom"))
+    def set_bottom(self, v): self.set("bottom", str(v))
+    def get_seen(self): return int(self.get("seen"))
+    def set_seen(self, v): self.set("seen", str(v))
+
+    top = property(get_top, set_top)
+    bottom = property(get_bottom, set_bottom)
+    seen = property(get_seen, set_seen)
+
+    def has_key(self, key):
+        return "%s:%s" % (self.namespace, key) in self.db
 
     def get(self, key):
         return self.db["%s:%s" % (self.namespace, key)]
 
     def set(self, key, value):
-        self.db["%s:%s" % (self.namespace, key)] = value
+        self.db["%s:%s" % (self.namespace, key)] = str(value)
+
+    def del_key(self, key):
+        del self.db["%s:%s" % (self.namespace, key)]
+
+    def add(self, item):
+        next_id = self.top = self.top + 1
+        self.set(next_id, item)
+        return next_id
 
     def pop_item(self): pass
-    def is_empty(self): pass
-    def push_back(self, item_id): pass
+
+    def is_empty(self):
+        start, end = self.seen, self.top
+        if start == end: return True
+        while start <= end:
+            if self.has_key(start): return True
+        return False
+
+    def delete(self, item_id):
+        self.del_key(item_id)
+        item_id = int(item_id) + 1
+        top = self.top
+        if item_id != self.bottom: return
+        while item_id <= top and self.has_key(item_id):
+            item_id += 1
+        self.bottom = item_id
+        if self.seen < item_id: self.seen = item_id
 # }}}
 
 # GettersQueue # {{{
@@ -97,7 +137,6 @@ class QueueManager(object):
     def handle_reset(self, namespace, item_id):
         q = self.get_q(namespace)
         del self.assigned_items[item_id]
-        q.pq.push_back(item_id)
         self.assign_next_if_possible(q)
 # }}}
 
