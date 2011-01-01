@@ -1,18 +1,37 @@
 from dutils.zutils import ZReplier, query_maker, send_multi, ZNull
-import threading, time, Queue
+import threading, time, Queue, bsddb
 
 ZQUEQUE_BIND = "tcp://127.0.0.1:7575"
+DBFILE = "./zqueue.db"
 DURATION = 5
+
+def log(msg):
+    print "[%s]: %s" % (time.asctime(), msg)
 
 # BDBPersistentQueue # {{{
 class BDBPersistentQueue(object):
     def __init__(self, db, namespace):
+        log("BDBPersistentQueue.__init__:%s" % namespace)
         self.db = db
         self.namespace = namespace
-        if not self.has_key("top"): self.set("top", 0)
-        if not self.has_key("bottom"): self.set("bottom", 0)
-        if not self.has_key("seen"): self.set("seen", 0)
+        self.init_and_check_db()
 
+    def init_and_check_db(self):
+        log("BDBPersistentQueue.init_and_check_db:%s" % self.namespace)
+        if not self.has_key("initialized"):
+            self.initialize_db()
+        self.seen = self.bottom
+        assert self.bottom <= self.top
+
+    def initialize_db(self):
+        log("BDBPersistentQueue.initialize_db:%s" % self.namespace)
+        self.set("top", 0)
+        self.set("bottom", 0)
+        self.set("seen", 0)
+        self.set("initialized", "True")
+        self.set("initialized_on", time.asctime())
+
+    # properties # {{{
     def get_top(self): return int(self.get("top"))
     def set_top(self, v): self.set("top", str(v))
     def get_bottom(self): return int(self.get("bottom"))
@@ -23,7 +42,9 @@ class BDBPersistentQueue(object):
     top = property(get_top, set_top)
     bottom = property(get_bottom, set_bottom)
     seen = property(get_seen, set_seen)
+    # }}}
 
+    # namespace helpers # {{{
     def has_key(self, key):
         return "%s:%s" % (self.namespace, key) in self.db
 
@@ -35,36 +56,59 @@ class BDBPersistentQueue(object):
 
     def del_key(self, key):
         del self.db["%s:%s" % (self.namespace, key)]
+    # }}}
 
     def add(self, item):
         next_id = self.top = self.top + 1
         self.set(next_id, item)
+        log("BDBPersistentQueue.add:%s:%s" % (next_id, item))
+        self.db.sync()
         return next_id
 
-    def pop_item(self): pass
+    def pop_item(self):
+        if self.is_empty(): return None, None
+        # there is something with us. increment seen
+        current_seen = self.seen
+        current_top = self.top
+        while current_seen <= current_top:
+            current_seen += 1
+            if self.has_key(current_seen): break
+        self.seen = current_seen
+        self.db.sync()
+        return str(current_seen), self.get(current_seen)
 
     def is_empty(self):
         start, end = self.seen, self.top
         if start == end: return True
         while start <= end:
-            if self.has_key(start): return True
-        return False
+            if self.has_key(start): return False
+            start += 1
+        return True
 
     def delete(self, item_id):
+        log("BDBPersistentQueue.delete:%s" % item_id)
         self.del_key(item_id)
         item_id = int(item_id) + 1
         top = self.top
+        self.db.sync()
         if item_id != self.bottom: return
         while item_id <= top and self.has_key(item_id):
             item_id += 1
         self.bottom = item_id
         if self.seen < item_id: self.seen = item_id
+        self.db.sync()
+
+    def reset(self, item_id):
+        item_id = int(item_id)
+        assert item_id >= self.bottom
+        if item_id < self.seen: self.seen = item_id
+        self.db.sync()
 # }}}
 
 # GettersQueue # {{{
 class GettersQueue(object):
     def __init__(self, namespace):
-        self.namespace
+        self.namespace = namespace
         self.q = Queue.Queue()
 
     def pop_getter(self): return self.q.get()
@@ -74,9 +118,9 @@ class GettersQueue(object):
 
 # NamespacedQueue # {{{
 class NamespacedQueue(object):
-    def __init__(self, namespace):
+    def __init__(self, db, namespace):
         self.namespace = namespace
-        self.pq = BDBPersistentQueue(namespace)
+        self.pq = BDBPersistentQueue(db, namespace)
         self.gq = GettersQueue(namespace)
 # }}}
 
@@ -99,10 +143,11 @@ class QueueManager(object):
         self.qs = {}
         self.socket = socket
         self.assigned_items = {}
+        self.db = bsddb.hashopen(DBFILE)
 
     def get_q(self, namespace):
         if namespace not in self.qs:
-            self.qs[namespace] = NamespacedQueue(namespace)
+            self.qs[namespace] = NamespacedQueue(self.db, namespace)
         return self.qs[namespace]
 
     def assign_item(self, item_id, item, requester):
@@ -142,8 +187,8 @@ class QueueManager(object):
 
 # ZQueue # {{{
 class ZQueue(ZReplier):
-    def __init__(self, bind):
-        super(ZQueue, self).__init__(bind)
+    def thread_init(self):
+        super(ZQueue, self).thread_init()
         self.qm = QueueManager(self.socket)
 
     def xreply(self, sender, line):
