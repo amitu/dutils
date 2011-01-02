@@ -263,6 +263,12 @@ class ZQueue(ZReplier):
             send_multi(self.socket, [sender, ZNull, "Unknown command: %s" % command])
 
     def thread_quit(self):
+        for namespaced_queue in self.qm.qs.values():
+            while not namespaced_queue.gq.is_empty():
+                send_multi(
+                    self.socket,
+                    [namespaced_queue.gq.pop_getter(), ZNull, "ZQueue.Shutdown"]
+                )
         self.qm.resetter.shutdown()
         super(ZQueue, self).thread_quit()
 # }}}
