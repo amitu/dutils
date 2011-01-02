@@ -124,17 +124,42 @@ class NamespacedQueue(object):
         self.gq = GettersQueue(namespace)
 # }}}
 
+# Resetter # {{{
+class Resetter(threading.Thread):
+    def __init__(self):
+        super(Resetter, self).__init__()
+        self.items_to_reset = Queue.Queue()
+
+    def enque(self, item):
+        self.items_to_reset.put(item)
+
+    def shutdown(self):
+        self.enque("Resetter.Shutdown")
+
+    def run(self):
+        reset_query = query_maker(bind=ZQUEQUE_BIND)
+        while True:
+            item = self.items_to_reset.get()
+            if item == "Resetter.Shutdown": 
+                log("Resetter.run: shutting down")
+                break
+            log("Resetter.run: resetting %s" % item)
+            reset_query(item)
+# }}}
+
 # DelayedResetter # {{{
 class DelayedResetter(threading.Thread):
-    def __init__(self, item_id, requester):
+    def __init__(self, item_id, requester, resetter):
+        super(DelayedResetter, self).__init__()
         self.item_id = item_id
         self.requester = requester
         self.ignore_it = threading.Event()
+        self.resetter = resetter
 
     def run(self):
         time.sleep(DURATION)
         if self.ignore_it.isSet(): return
-        query("reset:%s" % self.item_id)
+        self.resetter.enque(self.item_id)
 # }}}
 
 # Single Threaded QueueManager # {{{
@@ -144,21 +169,25 @@ class QueueManager(object):
         self.socket = socket
         self.assigned_items = {}
         self.db = bsddb.hashopen(DBFILE)
+        self.resetter = Resetter()
+        self.resetter.start()
 
     def get_q(self, namespace):
         if namespace not in self.qs:
             self.qs[namespace] = NamespacedQueue(self.db, namespace)
         return self.qs[namespace]
 
-    def assign_item(self, item_id, item, requester):
+    def assign_item(self, namespace, item_id, item, requester):
         send_multi(self.socket, [requester, ZNull, item_id + ":" + item])
-        self.assigned_items[item_id] = DelayedResetter(item_id, requester)
+        key = "%s:reset:%s" % (namespace, item_id)
+        self.assigned_items[key] = DelayedResetter(key, requester, self.resetter)
+        self.assigned_items[key].start()
 
-    def assign_next_if_possible(self, q):
+    def assign_next_if_possible(self, namespace, q):
         if q.pq.is_empty() or q.gq.is_empty(): return
         item_id, item = q.pq.pop_item()
         requester = q.gq.pop_getter()
-        self.assign_item(item_id, item, requester)
+        self.assign_item(namespace, item_id, item, requester)
 
     def handle_get(self, namespace, sender):
         q = self.get_q(namespace)
@@ -166,7 +195,7 @@ class QueueManager(object):
             q.gq.add(sender)
         else:
             item_id, item = q.pq.pop_item()
-            self.assign_item(item_id, item, sender)
+            self.assign_item(namespace, item_id, item, sender)
 
     def handle_delete(self, namespace, item_id):
         q = self.get_q(namespace)
@@ -177,12 +206,13 @@ class QueueManager(object):
     def handle_add(self, namespace, item):
         q = self.get_q(namespace)
         q.pq.add(item)
-        self.assign_next_if_possible(q)
+        self.assign_next_if_possible(namespace, q)
 
     def handle_reset(self, namespace, item_id):
         q = self.get_q(namespace)
-        del self.assigned_items[item_id]
-        self.assign_next_if_possible(q)
+        key = "%s:reset:%s" % (namespace, item_id)
+        del self.assigned_items[key]
+        self.assign_next_if_possible(namespace, q)
 # }}}
 
 # ZQueue # {{{
@@ -210,6 +240,10 @@ class ZQueue(ZReplier):
         elif command.startswith("reset"):
             self.qm.handle_reset(namespace, command.split(":", 1)[1])
             send_multi(self.socket, [sender, ZNull, "ack"])
+
+    def thread_quit(self):
+        self.qm.resetter.shutdown()
+        super(ZQueue, self).thread_quit()
 # }}}
 
 query = query_maker(bind=ZQUEQUE_BIND)
