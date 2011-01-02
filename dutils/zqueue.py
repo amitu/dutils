@@ -127,7 +127,11 @@ class GettersQueue(object):
         self.namespace = namespace
         self.q = Queue.Queue()
 
-    def pop_getter(self): return self.q.get()
+    def pop_getter(self): 
+        getter = self.q.get()
+        self.q.task_done()
+        return getter
+
     def is_empty(self): return self.q.empty()
     def add(self, getter): self.q.put(getter)
 # }}}
@@ -156,6 +160,7 @@ class Resetter(threading.Thread):
         reset_query = query_maker(bind=ZQUEQUE_BIND)
         while True:
             item = self.items_to_reset.get()
+            self.items_to_reset.task_done()
             if item == "Resetter.Shutdown": 
                 log("Resetter.run: shutting down")
                 break
