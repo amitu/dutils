@@ -216,8 +216,9 @@ class QueueManager(object):
     def handle_delete(self, namespace, item_id):
         q = self.get_q(namespace)
         q.pq.delete(item_id)
-        self.assigned_items[item_id].ignore_it.set()
-        del self.assigned_items[item_id]
+        if item_id in self.assigned_items:
+            self.assigned_items[item_id].ignore_it.set()
+            del self.assigned_items[item_id]
 
     def handle_add(self, namespace, item):
         q = self.get_q(namespace)
@@ -228,7 +229,7 @@ class QueueManager(object):
         q = self.get_q(namespace)
         key = "%s:reset:%s" % (namespace, item_id)
         del self.assigned_items[key]
-        q.pq.reset(item_id)
+        if q.pq.has_key(item_id): q.pq.reset(item_id)
         self.assign_next_if_possible(namespace, q)
 # }}}
 
