@@ -16,11 +16,22 @@ class BDBPersistentQueue(object):
         self.namespace = namespace
         self.init_and_check_db()
 
+    def mark_assigned(self, item_id):
+        self.set(item_id, "True,%s" % self.get(item_id).split(",", 1)[1])
+
+    def mark_unassigned(self, item_id):
+        self.set(item_id, "False,%s" % self.get(item_id).split(",", 1)[1])
+
+    def is_assigned(self, item_id):
+        return self.get(item_id).split(",", 1)[0] == "True"
+
     def init_and_check_db(self):
         log("BDBPersistentQueue.init_and_check_db:%s" % self.namespace)
         if not self.has_key("initialized"):
             self.initialize_db()
         self.seen = self.bottom
+        for i in range(self.bottom + 1, self.top + 1):
+            if self.has_key(i): self.mark_unassigned(i)
         assert self.bottom <= self.top
 
     def initialize_db(self):
@@ -60,9 +71,9 @@ class BDBPersistentQueue(object):
 
     def add(self, item):
         next_id = self.top = self.top + 1
-        self.set(next_id, item)
+        self.set(next_id, "False,%s" % item)
         log("BDBPersistentQueue.add:%s:%s" % (next_id, item))
-        self.db.sync()
+        #self.db.sync()
         return next_id
 
     def pop_item(self):
@@ -72,16 +83,20 @@ class BDBPersistentQueue(object):
         current_top = self.top
         while current_seen <= current_top:
             current_seen += 1
-            if self.has_key(current_seen): break
+            if (
+                self.has_key(current_seen) and
+                not self.is_assigned(current_seen)
+            ): break
         self.seen = current_seen
-        self.db.sync()
-        return str(current_seen), self.get(current_seen)
+        self.mark_assigned(current_seen)
+        #self.db.sync()
+        return str(current_seen), self.get(current_seen).split(",", 1)[1]
 
     def is_empty(self):
         start, end = self.seen, self.top
         if start == end: return True
         while start <= end:
-            if self.has_key(start): return False
+            if self.has_key(start) and not self.is_assigned(start): return False
             start += 1
         return True
 
@@ -90,19 +105,20 @@ class BDBPersistentQueue(object):
         self.del_key(item_id)
         item_id = int(item_id) + 1
         top = self.top
-        self.db.sync()
+        #self.db.sync()
         if item_id != self.bottom: return
         while item_id <= top and self.has_key(item_id):
             item_id += 1
         self.bottom = item_id
         if self.seen < item_id: self.seen = item_id
-        self.db.sync()
+        #self.db.sync()
 
     def reset(self, item_id):
         item_id = int(item_id)
         assert item_id >= self.bottom
-        if item_id < self.seen: self.seen = item_id
-        self.db.sync()
+        self.mark_unassigned(item_id)
+        if item_id <= self.seen: self.seen = item_id - 1
+        #self.db.sync()
 # }}}
 
 # GettersQueue # {{{
@@ -212,6 +228,7 @@ class QueueManager(object):
         q = self.get_q(namespace)
         key = "%s:reset:%s" % (namespace, item_id)
         del self.assigned_items[key]
+        q.pq.reset(item_id)
         self.assign_next_if_possible(namespace, q)
 # }}}
 
@@ -240,6 +257,9 @@ class ZQueue(ZReplier):
         elif command.startswith("reset"):
             self.qm.handle_reset(namespace, command.split(":", 1)[1])
             send_multi(self.socket, [sender, ZNull, "ack"])
+        else:
+            log("Unknown command: %s" % command)
+            send_multi(self.socket, [sender, ZNull, "Unknown command: %s" % command])
 
     def thread_quit(self):
         self.qm.resetter.shutdown()
