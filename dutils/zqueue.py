@@ -11,20 +11,12 @@ def log(msg):
 
 # BDBPersistentQueue # {{{
 class BDBPersistentQueue(object):
+    # initalizations # {{{
     def __init__(self, db, namespace):
         log("BDBPersistentQueue.__init__:%s" % namespace)
         self.db = db
         self.namespace = namespace
         self.init_and_check_db()
-
-    def mark_assigned(self, item_id):
-        self.set(item_id, "True,%s" % self.get(item_id).split(",", 1)[1])
-
-    def mark_unassigned(self, item_id):
-        self.set(item_id, "False,%s" % self.get(item_id).split(",", 1)[1])
-
-    def is_assigned(self, item_id):
-        return self.get(item_id).split(",", 1)[0] == "True"
 
     def init_and_check_db(self):
         log("BDBPersistentQueue.init_and_check_db:%s" % self.namespace)
@@ -45,6 +37,18 @@ class BDBPersistentQueue(object):
         self.set("seen", 0)
         self.set("initialized", "True")
         self.set("initialized_on", time.asctime())
+    # }}}
+
+    # assigning tasks # {{{
+    def mark_assigned(self, item_id):
+        self.set(item_id, "True,%s" % self.get(item_id).split(",", 1)[1])
+
+    def mark_unassigned(self, item_id):
+        self.set(item_id, "False,%s" % self.get(item_id).split(",", 1)[1])
+
+    def is_assigned(self, item_id):
+        return self.get(item_id).split(",", 1)[0] == "True"
+    # }}}
 
     # properties # {{{
     def get_top(self): return int(self.get("top"))
@@ -73,6 +77,7 @@ class BDBPersistentQueue(object):
         del self.db["%s:%s" % (self.namespace, key)]
     # }}}
 
+    # core methods # {{{
     def add(self, item):
         next_id = self.top = self.top + 1
         self.set(next_id, "False,%s" % item)
@@ -123,6 +128,7 @@ class BDBPersistentQueue(object):
         self.mark_unassigned(item_id)
         if item_id <= self.seen: self.seen = item_id - 1
         #self.db.sync()
+    # }}}
 # }}}
 
 # GettersQueue # {{{
