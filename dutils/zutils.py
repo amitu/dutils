@@ -96,7 +96,6 @@ class ZReplier(threading.Thread):
                 except Exception, e:
                     self.log("Exception %s for: %s" % (e, message))
                     send_multi(self.socket, parts, "exception: %s" % e)
-                    raise
 
             self.thread_quit()
 
