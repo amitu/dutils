@@ -6,6 +6,7 @@ DBFILE = "./zqueue.db"
 DURATION = 5
 
 def log(msg):
+    return
     print "[%s]: %s" % (time.asctime(), msg)
 
 # BDBPersistentQueue # {{{
@@ -32,6 +33,9 @@ class BDBPersistentQueue(object):
         self.seen = self.bottom
         for i in range(self.bottom + 1, self.top + 1):
             if self.has_key(i): self.mark_unassigned(i)
+        print "BDBPersistentQueue opened queue: %s with b/s/t: %s/%s/%s" % (
+            self.namespace, self.bottom, self.seen, self.top
+        )
         assert self.bottom <= self.top
 
     def initialize_db(self):
@@ -107,7 +111,7 @@ class BDBPersistentQueue(object):
         top = self.top
         #self.db.sync()
         if item_id != self.bottom: return
-        while item_id <= top and self.has_key(item_id):
+        while item_id <= top and not self.has_key(item_id):
             item_id += 1
         self.bottom = item_id
         if self.seen < item_id: self.seen = item_id
@@ -178,7 +182,7 @@ class DelayedResetter(threading.Thread):
         self.resetter = resetter
 
     def run(self):
-        time.sleep(DURATION)
+        self.ignore_it.wait(DURATION)
         if self.ignore_it.isSet(): return
         self.resetter.enque(self.item_id)
 # }}}
@@ -221,14 +225,16 @@ class QueueManager(object):
     def handle_delete(self, namespace, item_id):
         q = self.get_q(namespace)
         q.pq.delete(item_id)
-        if item_id in self.assigned_items:
-            self.assigned_items[item_id].ignore_it.set()
-            del self.assigned_items[item_id]
+        key = "%s:reset:%s" % (namespace, item_id)
+        if key in self.assigned_items:
+            self.assigned_items[key].ignore_it.set()
+            del self.assigned_items[key]
 
     def handle_add(self, namespace, item):
         q = self.get_q(namespace)
-        q.pq.add(item)
+        item_id = q.pq.add(item)
         self.assign_next_if_possible(namespace, q)
+        return item_id
 
     def handle_reset(self, namespace, item_id):
         q = self.get_q(namespace)
@@ -251,15 +257,15 @@ class ZQueue(ZReplier):
             return send_multi(
                 self.socket, [sender, ZNull, super(ZQueue, self).reply(line)]
             )
-        print namespace, command
+        #print namespace, command
         if command == "get":
             self.qm.handle_get(namespace, sender)
         elif command.startswith("delete"):
             self.qm.handle_delete(namespace, command.split(":", 1)[1])
             send_multi(self.socket, [sender, ZNull, "ack"])
         elif command.startswith("add"):
-            self.qm.handle_add(namespace, command.split(":", 1)[1])
-            send_multi(self.socket, [sender, ZNull, "ack"])
+            item_id = self.qm.handle_add(namespace, command.split(":", 1)[1])
+            send_multi(self.socket, [sender, ZNull, str(item_id)])
         elif command.startswith("reset"):
             self.qm.handle_reset(namespace, command.split(":", 1)[1])
             send_multi(self.socket, [sender, ZNull, "ack"])
