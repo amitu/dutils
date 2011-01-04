@@ -111,7 +111,7 @@ class ZReplier(threading.Thread):
             self.start()
             try:
                 while True:
-                    time.sleep(1)
+                    self.shutdown_event.wait(1)
                     if self.shutdown_event.isSet():
                         print "Terminating after remote signal."
                         break
