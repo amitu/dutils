@@ -220,10 +220,13 @@ class QueueManager(object):
         requester = q.gq.pop_getter()
         self.assign_item(namespace, item_id, item, requester)
 
-    def handle_get(self, namespace, sender):
+    def handle_get(self, namespace, sender, blocking=True):
         q = self.get_q(namespace)
         if q.pq.is_empty():
-            q.gq.add(sender)
+            if blocking:
+                q.gq.add(sender)
+            else:
+                send_multi(self.socket, [sender, ZNull, "ZQueue.Empty"])
         else:
             item_id, item = q.pq.pop_item()
             self.assign_item(namespace, item_id, item, sender)
@@ -266,6 +269,8 @@ class ZQueue(ZReplier):
         #print namespace, command
         if command == "get":
             self.qm.handle_get(namespace, sender)
+        elif command == "nbget":
+            self.qm.handle_get(namespace, sender, blocking=False)
         elif command.startswith("delete"):
             self.qm.handle_delete(namespace, command.split(":", 1)[1])
             send_multi(self.socket, [sender, ZNull, "ack"])
