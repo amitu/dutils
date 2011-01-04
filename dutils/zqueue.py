@@ -114,11 +114,7 @@ class BDBPersistentQueue(object):
         item_id = int(item_id) + 1
         top = self.top
         #self.db.sync()
-        if item_id == self.bottom + 1:
-            self.bottom = item_id
-            if self.seen < item_id:
-                self.seen = item_id
-            return
+        if item_id != self.bottom: return
         while item_id <= top and not self.has_key(item_id):
             item_id += 1
         self.bottom = item_id
@@ -309,6 +305,7 @@ class ZQueueConsumer(threading.Thread):
         self.namespace = namespace
         self.bind = bind
         self.start()
+        print "ZQueueConsumer for", namespace
 
     def process(self, item): pass
 
@@ -316,6 +313,7 @@ class ZQueueConsumer(threading.Thread):
         q = query_maker(bind=self.bind)
         while True:
             msg = q("%s:get" % self.namespace)
+            print "ZQueueConsumer:run", msg
             if msg == "ZQueue.Shutdown": continue
             item_id, item = msg.split(":", 1)
             self.process(item)
