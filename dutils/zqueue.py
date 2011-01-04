@@ -6,7 +6,6 @@ DBFILE = "./zqueue.db"
 DURATION = 5
 
 def log(msg):
-    return
     print "[%s]: %s" % (time.asctime(), msg)
 
 # BDBPersistentQueue # {{{
@@ -314,7 +313,7 @@ class ZQueueConsumer(threading.Thread):
     def process(self, item): pass
 
     def run(self):
-        q = query_maker(self.bind)
+        q = query_maker(bind=self.bind)
         while True:
             msg = q("%s:get" % self.namespace)
             if msg == "ZQueue.Shutdown": continue

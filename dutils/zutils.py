@@ -27,13 +27,15 @@ class ZPublisher(threading.Thread):
         super(ZPublisher, self).__init__()
         self.daemon = True
         self.bind = bind
-        self.q = Queue.Queue
+        self.q = Queue.Queue()
+        self.start()
 
     def publish(self, msg): self.q.put(msg)
     def shutdown(self): self.publish("ZPublisher.Shutdown")
     def run(self):
         self.socket = CONTEXT.socket(zmq.PUB)
         self.socket.bind(self.bind)
+        print "ZPublisher listening on", self.bind
         while True:
             msg = self.q.get()
             if msg == "ZPublisher.Shutdown":
@@ -59,7 +61,6 @@ class ZReplier(threading.Thread):
         def thread_init(self):
             self.socket = CONTEXT.socket(zmq.XREP)
             try:
-                print self.bind
                 self.socket.bind(self.bind)
             except zmq.ZMQError, e:
                 print e, "while binding on", self.bind
