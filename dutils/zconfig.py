@@ -1,7 +1,7 @@
 # imports # {{{
 from optparse import OptionParser
-from zutils import ZReplier, query_maker, CONTEXT
-import bsddb, os, zmq, time
+import bsddb, os, zmq
+from zutils import ZReplier, query_maker, CONTEXT, ZPublisher
 # }}}
 
 ZCONFIG_LOCATION = os.environ.get("ZCONFIG_LOCATION", "tcp://127.0.0.1:5559")
@@ -15,7 +15,6 @@ class ZConfigServer(ZReplier):
         self.zfile = zfile
 
     def create_publisher(self):
-        self.publisher_port = CONTEXT.socket(zmq.PUB)
         BIND_KEY = "dutils.zconfig.publisher_port"
         DEFAULT_BIND = "tcp://127.0.0.1:5558"
         if BIND_KEY in self.db:
@@ -24,7 +23,7 @@ class ZConfigServer(ZReplier):
             PUBLISHER_BIND = DEFAULT_BIND
             self.db[BIND_KEY] = DEFAULT_BIND
             self.db.sync()
-        self.publisher_port.bind(PUBLISHER_BIND)
+        self.publisher = ZPublisher(PUBLISHER_BIND)
         print "ZConfigServer publishing on %s." % PUBLISHER_BIND
 
     def thread_init(self):
@@ -40,7 +39,7 @@ class ZConfigServer(ZReplier):
             self.increment_stats_counter("write")
             self.db[key] = val
             self.db.sync()
-            self.publisher_port.send("%s:%s" % (key, val))
+            self.publisher.publish("%s:%s" % (key, val))
             return "written, thanks"
         elif message.startswith("del"):
             key = message.split(":", 1)[1]
@@ -67,7 +66,7 @@ class ZConfigServer(ZReplier):
 
     def thread_quit(self):
         super(ZConfigServer, self).thread_quit()
-        self.publisher_port.close()
+        self.publisher.shutdown()
 # }}}
 
 query = query_maker(bind=ZCONFIG_LOCATION)
