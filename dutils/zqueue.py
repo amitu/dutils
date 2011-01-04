@@ -115,7 +115,11 @@ class BDBPersistentQueue(object):
         item_id = int(item_id) + 1
         top = self.top
         #self.db.sync()
-        if item_id != self.bottom: return
+        if item_id == self.bottom + 1:
+            self.bottom = item_id
+            if self.seen < item_id:
+                self.seen = item_id
+            return
         while item_id <= top and not self.has_key(item_id):
             item_id += 1
         self.bottom = item_id
@@ -296,6 +300,61 @@ class ZQueue(ZReplier):
 # }}}
 
 query = query_maker(bind=ZQUEQUE_BIND)
+
+# ZQueueConsumer # {{{
+class ZQueueConsumer(threading.Thread):
+    def __init__(self, bind, namespace):
+        super(ZQueueConsumer, self).__init__()
+        self.daemon = True
+
+        self.namespace = namespace
+        self.bind = bind
+        self.start()
+
+    def process(self, item): pass
+
+    def run(self):
+        q = query_maker(self.bind)
+        while True:
+            msg = q("%s:get" % self.namespace)
+            if msg == "ZQueue.Shutdown": continue
+            item_id, item = msg.split(":", 1)
+            self.process(item)
+            q("%s:delete:%s" % (self.namespace, item_id))
+# }}}
+
+# ZQueueMultiConsumer # {{{
+class ZQueueMultiConsumer(threading.Thread):
+    def __init__(self, *queues):
+        self.queues = queues
+        self.task_queue = Queue.Queue()
+
+    def process(self, item, namespace, bind): pass
+
+    def run(self):
+        while True:
+            msg = self.task_queue.get()
+            if msg == "ZQueueMultiConsumer.Shutdown":
+                break
+            item, namespace, bind = msg
+            self.process(item, namespace, bind)
+
+    def shutdown(self):
+        self.task_queue.put("ZQueueMultiConsumer.Shutdown")
+
+    def loop(self):
+        self.start()
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print "Terminating ZQueueMultiConsumer..."
+            self.shutdown()
+            self.join()
+            print "Terminated."
+
+# }}}
+
 
 def main():
     ZQueue(bind=ZQUEQUE_BIND).loop()
