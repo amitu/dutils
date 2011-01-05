@@ -72,6 +72,18 @@ class ZConfigServer(ZReplier):
 
 query = query_maker(bind=ZCONFIG_LOCATION)
 
+NOT_SET = object()
+
+def get(key, default=NOT_SET):
+    data = query("read:%s" % key, raw_output=True)
+    print data
+    if data == "NA" and default != NOT_SET:
+        query("write:%s:%s" % (key, default))
+        data = default
+    assert data != "NA"
+    return data
+
+
 # watch for changes # {{{
 def printer(key, value):
     print "%s: %s" % (key, value)
