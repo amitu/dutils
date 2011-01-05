@@ -1,6 +1,7 @@
 # imports # {{{
 from optparse import OptionParser
 import bsddb, os, zmq
+from pprint import pprint
 from zutils import ZReplier, query_maker, CONTEXT, ZPublisher
 # }}}
 
@@ -95,21 +96,20 @@ def main():
 
     if args and args[0] == "read":
         for k in args[1:]:
-            print "%s: %s" % (k, query("read:%s" % k))
+            print "%s: %s" % (k, query("read:%s" % k, raw_output=True))
         return
 
-    if args and args[0] == "del":
+    if args and args[0] == "delete":
         for k in args[1:]:
             print "%s: %s" % (k, query("del:%s" % k))
         return
 
     if args and args[0] == "dump":
-        print query("dump")
+        pprint(query("dump"))
         return
 
     if args and (args[0] == "list" or args[0] == "ls"):
-        from django.utils import simplejson
-        d = simplejson.loads(query("dump"))
+        d = query("dump")
         keys = d.keys()
         keys.sort()
         f = ""
@@ -128,8 +128,7 @@ def main():
         return
 
     if args and args[0] == "stats":
-        from django.utils import simplejson
-        for k, v in simplejson.loads(query("stats")).items():
+        for k, v in query("stats").items():
             print "%s: %s" % (k, v)
         return
 
