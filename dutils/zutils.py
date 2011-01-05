@@ -56,7 +56,7 @@ class ZSubscriber(threading.Thread):
 
     def run(self):
         self.socket = CONTEXT.socket(zmq.SUB)
-        self.socket.bind(self.bind)
+        self.socket.connect(self.bind)
         while True:
             self.process(self.socket.recv())
 # }}}
