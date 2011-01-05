@@ -44,6 +44,23 @@ class ZPublisher(threading.Thread):
             self.socket.send(msg)
 # }}}
 
+# ZSubscriber # {{{
+class ZSubscriber(threading.Thread):
+    def __init__(self, bind):
+        super(ZSubscriber, self).__init__()
+        self.daemon = True
+        self.bind = bind
+        self.start()
+
+    def process(self, msg): pass
+
+    def run(self):
+        self.socket = CONTEXT.socket(zmq.SUB)
+        self.socket.bind(self.bind)
+        while True:
+            self.process(self.socket.recv())
+# }}}
+
 # ZReplier # {{{
 class ZReplier(threading.Thread):
 
