@@ -1,4 +1,4 @@
-import zmq, threading, time, Queue
+import zmq, threading, time, Queue, json
 
 CONTEXT = zmq.Context()
 ZNull = zmq.Message(None)
@@ -164,6 +164,25 @@ class ZReplier(threading.Thread):
                 print "Terminated."
 # }}}
 
+def process_command(msg):
+    args_part = msg.split("{", 1)[0]
+    json_part = msg[len(args_part):]
+    if json_part and args_part and args_part[-1] == ":": 
+        args_part = args_part[:-1]
+    args_part = args_part.split(":") if args_part else []
+    if json_part:
+        json_part = json.loads(json_part)
+        args_part.append(json_part)
+    if len(args_part) == 1: return args_part[0]
+    return args_part
+
+assert process_command("asd") == "asd"
+assert process_command("asd:asdasd") == ["asd", "asdasd"]
+assert process_command("ee:eeee:ekeee") == ["ee", "eeee", "ekeee"]
+assert process_command('{"d": 20}') == { "d": 20 }
+assert process_command('result:{"r": "dodo"}') == ["result", { "r": "dodo" }]
+assert process_command('result:r2:{"r": "dodo"}') == ["result", "r2", { "r": "dodo" }]
+
 def query_maker(socket=None, bind=None):
     if not socket:
         assert bind
@@ -171,11 +190,22 @@ def query_maker(socket=None, bind=None):
         #socket = CONTEXT.socket(zmq.XREQ)
         socket.connect(bind)
 
-    def query(cmd):
+    def query(*args, **kw):
         #socket.send(ZNull, zmq.SNDMORE)
+        raw_output = kw.pop("raw_output", False)
+        if args and kw:
+            cmd = "%s:%s" % ( ":".join(args), json.dumps(kw))
+        elif args:
+            cmd = ":".join(args)
+        elif kw:
+            cmd = json.dumps(kw)
+        else:
+            cmd = ""
         socket.send(cmd)
         #socket.recv()
-        return socket.recv()
+        response = socket.recv()
+        if raw_output: return response
+        return process_command(response)
 
     return query
 

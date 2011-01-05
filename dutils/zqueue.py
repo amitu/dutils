@@ -258,9 +258,10 @@ class ZQueue(ZReplier):
         super(ZQueue, self).thread_init()
         self.qm = QueueManager(self.socket)
 
-    def xreply(self, sender, line):
+    def xreply(self, sender, arguments):
+        if len(arguments) == 2: arguments.append("")
         try:
-            namespace, command = line.split(":", 1)
+            namespace, command, argument = arguments
         except ValueError:
             return send_multi(
                 self.socket, [sender, ZNull, super(ZQueue, self).reply(line)]
@@ -271,13 +272,13 @@ class ZQueue(ZReplier):
         elif command == "nbget":
             self.qm.handle_get(namespace, sender, blocking=False)
         elif command.startswith("delete"):
-            self.qm.handle_delete(namespace, command.split(":", 1)[1])
+            self.qm.handle_delete(namespace, argument)
             send_multi(self.socket, [sender, ZNull, "ack"])
         elif command.startswith("add"):
-            item_id = self.qm.handle_add(namespace, command.split(":", 1)[1])
+            item_id = self.qm.handle_add(namespace, argument)
             send_multi(self.socket, [sender, ZNull, str(item_id)])
         elif command.startswith("reset"):
-            self.qm.handle_reset(namespace, command.split(":", 1)[1])
+            self.qm.handle_reset(namespace, argument)
             send_multi(self.socket, [sender, ZNull, "ack"])
         else:
             log("Unknown command: %s" % command)
@@ -315,7 +316,7 @@ class ZQueueConsumer(threading.Thread):
             msg = q("%s:get" % self.namespace)
             print "ZQueueConsumer:run", msg
             if msg == "ZQueue.Shutdown": continue
-            item_id, item = msg.split(":", 1)
+            item_id, item = msg
             self.process(item)
             q("%s:delete:%s" % (self.namespace, item_id))
 # }}}
