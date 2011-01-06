@@ -35,7 +35,6 @@ class ZPublisher(threading.Thread):
     def run(self):
         self.socket = CONTEXT.socket(zmq.PUB)
         self.socket.bind(self.bind)
-        print "ZPublisher listening on", self.bind
         while True:
             msg = self.q.get()
             if msg == "ZPublisher.Shutdown":
@@ -46,10 +45,11 @@ class ZPublisher(threading.Thread):
 
 # ZSubscriber # {{{
 class ZSubscriber(threading.Thread):
-    def __init__(self, bind):
+    def __init__(self, bind, glob=""):
         super(ZSubscriber, self).__init__()
         self.daemon = True
         self.bind = bind
+        self.glob = glob
         self.start()
 
     def process(self, msg): pass
@@ -57,6 +57,7 @@ class ZSubscriber(threading.Thread):
     def run(self):
         self.socket = CONTEXT.socket(zmq.SUB)
         self.socket.connect(self.bind)
+        self.socket.setsockopt(zmq.SUBSCRIBE, self.glob)
         while True:
             self.process(self.socket.recv())
 # }}}

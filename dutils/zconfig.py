@@ -76,7 +76,6 @@ NOT_SET = object()
 
 def get(key, default=NOT_SET):
     data = query("read:%s" % key, raw_output=True)
-    print data
     if data == "NA" and default != NOT_SET:
         query("write:%s:%s" % (key, default))
         data = default
