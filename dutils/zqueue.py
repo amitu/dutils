@@ -264,7 +264,7 @@ class ZQueue(ZReplier):
             namespace, command, argument = arguments
         except ValueError:
             return send_multi(
-                self.socket, [sender, ZNull, super(ZQueue, self).reply(line)]
+                self.socket, [sender, ZNull, super(ZQueue, self).reply(arguments)]
             )
         #print namespace, command
         if command == "get":
