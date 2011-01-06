@@ -1,5 +1,5 @@
 from dutils.zutils import ZReplier, query_maker, send_multi, ZNull, process_command
-import threading, time, Queue, bsddb
+import threading, time, Queue, bsddb, json
 
 ZQUEQUE_BIND = "tcp://127.0.0.1:7575"
 DBFILE = "./zqueue.db"
@@ -239,6 +239,7 @@ class QueueManager(object):
             del self.assigned_items[key]
 
     def handle_add(self, namespace, item):
+        if type(item) == type({}): item = json.dumps(item)
         q = self.get_q(namespace)
         item_id = q.pq.add(item)
         self.assign_next_if_possible(namespace, q)
