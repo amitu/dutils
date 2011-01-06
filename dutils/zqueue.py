@@ -1,4 +1,4 @@
-from dutils.zutils import ZReplier, query_maker, send_multi, ZNull
+from dutils.zutils import ZReplier, query_maker, send_multi, ZNull, process_command
 import threading, time, Queue, bsddb
 
 ZQUEQUE_BIND = "tcp://127.0.0.1:7575"
@@ -258,13 +258,14 @@ class ZQueue(ZReplier):
         super(ZQueue, self).thread_init()
         self.qm = QueueManager(self.socket)
 
-    def xreply(self, sender, arguments):
+    def xreply(self, sender, message):
+        arguments = process_command(message)
         if len(arguments) == 2: arguments.append("")
         try:
             namespace, command, argument = arguments
         except ValueError:
             return send_multi(
-                self.socket, [sender, ZNull, super(ZQueue, self).reply(arguments)]
+                self.socket, [sender, ZNull, super(ZQueue, self).reply(message)]
             )
         #print namespace, command
         if command == "get":
