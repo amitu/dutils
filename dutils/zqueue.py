@@ -77,13 +77,16 @@ class BDBPersistentQueue(object):
     # }}}
 
     # core methods # {{{
+    # add # {{{
     def add(self, item):
         next_id = self.top = self.top + 1
         self.set(next_id, "False,%s" % item)
         log("BDBPersistentQueue.add:%s:%s" % (next_id, item))
         #self.db.sync()
         return next_id
+    # }}}
 
+    # pop_item # {{{
     def pop_item(self):
         if self.is_empty(): return None, None
         # there is something with us. increment seen
@@ -99,34 +102,37 @@ class BDBPersistentQueue(object):
         self.mark_assigned(current_seen)
         #self.db.sync()
         return str(current_seen), self.get(current_seen).split(",", 1)[1]
+    # }}}
 
-    def is_empty(self):
-        start, end = self.seen, self.top
-        if start == end: return True
-        while start <= end:
-            if self.has_key(start) and not self.is_assigned(start): return False
-            start += 1
-        return True
+    # is_empty {{{
+    def is_empty(self): return self.seen == self.top
+    # }}}
 
+    # delete {{{
     def delete(self, item_id):
         log("BDBPersistentQueue.delete:%s" % item_id)
         self.del_key(item_id)
-        item_id = int(item_id) + 1
-        top = self.top
-        #self.db.sync()
-        if item_id != self.bottom: return
-        while item_id <= top and not self.has_key(item_id):
+        item_id = int(item_id)
+        bottom = self.bottom
+        if item_id != bottom + 1: return
+        # we just deleted the bottom item... update self.bottom and self.seen
+        # new self.bottom should be first element going up that is not empty
+        top, seen = self.top, self.seen
+        while item_id <= top:
             item_id += 1
-        self.bottom = item_id
-        if self.seen < item_id: self.seen = item_id
-        #self.db.sync()
+            if self.has_key(item_id): break
+        self.bottom = bottom = item_id - 1
+        if seen < bottom: self.seen = bottom
+    # }}}
 
+    # reset {{{
     def reset(self, item_id):
         item_id = int(item_id)
         assert item_id >= self.bottom
         self.mark_unassigned(item_id)
         if item_id <= self.seen: self.seen = item_id - 1
         #self.db.sync()
+    # }}}
     # }}}
 # }}}
 
