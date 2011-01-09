@@ -2,7 +2,7 @@ from dutils.zutils import ZReplier, query_maker, send_multi, ZNull, process_comm
 import threading, time, Queue, bsddb, json
 
 ZQUEQUE_BIND = "tcp://127.0.0.1:7575"
-DBFILE = "./zqueue.db"
+DBFILE = "./zqueue.bdb"
 DURATION = 5
 
 def log(msg):

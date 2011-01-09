@@ -1,6 +1,7 @@
 *.pyc
 *.pyo
 *.swp
+*.bdb
 *.log
 db.sqlite
 MANIFEST
