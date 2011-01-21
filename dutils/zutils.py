@@ -57,7 +57,11 @@ class ZSubscriber(threading.Thread):
     def run(self):
         self.socket = CONTEXT.socket(zmq.SUB)
         self.socket.connect(self.bind)
-        self.socket.setsockopt(zmq.SUBSCRIBE, self.glob)
+        if type(self.glob) == list:
+            for glob in self.glob:
+                self.socket.setsockopt(zmq.SUBSCRIBE, glob)
+        else:
+            self.socket.setsockopt(zmq.SUBSCRIBE, self.glob)
         while True:
             self.process(self.socket.recv())
 # }}}
