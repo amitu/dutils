@@ -52,7 +52,7 @@ class ZSubscriber(threading.Thread):
         self.glob = glob
         self.start()
 
-    def process(self, msg): pass
+    def process(self, msg): print msg
 
     def run(self):
         self.socket = CONTEXT.socket(zmq.SUB)
