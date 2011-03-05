@@ -41,22 +41,27 @@ class ZPublisher(threading.Thread):
                 self.socket.close()
                 break
             self.socket.send(msg)
+            self.q.task_done()
 # }}}
 
 # ZSubscriber # {{{
 class ZSubscriber(threading.Thread):
-    def __init__(self, bind, glob=""):
+    def __init__(self, bind, glob="", start=True):
         super(ZSubscriber, self).__init__()
         self.daemon = True
         self.bind = bind
         self.glob = glob
-        self.start()
+        if start: self.start()
 
     def process(self, msg): print msg
 
     def run(self):
         self.socket = CONTEXT.socket(zmq.SUB)
-        self.socket.connect(self.bind)
+        if type(self.bind) == list:
+            for bind in self.bind:
+                self.socket.connect(bind)
+        else:
+            self.socket.connect(self.bind)
         if type(self.glob) == list:
             for glob in self.glob:
                 self.socket.setsockopt(zmq.SUBSCRIBE, glob)
@@ -172,7 +177,7 @@ class ZReplier(threading.Thread):
 def process_command(msg):
     args_part = msg.split("{", 1)[0]
     json_part = msg[len(args_part):]
-    if json_part and args_part and args_part[-1] == ":": 
+    if json_part and args_part and args_part[-1] == ":":
         args_part = args_part[:-1]
     args_part = args_part.split(":") if args_part else []
     if json_part:
