@@ -119,6 +119,10 @@ def main():
         pprint(query("dump"))
         return
 
+    if args and args[0] == "shutdown":
+        pprint(query("shutdown"))
+        return
+
     if args and (args[0] == "list" or args[0] == "ls"):
         d = query("dump")
         keys = d.keys()
